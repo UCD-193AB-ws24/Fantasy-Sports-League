@@ -1,0 +1,229 @@
+/* =========================
+   MODAL WRAPPER STYLES
+   ========================= */
+   .PS_modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* high enough so nothing from the roster shows */
+  }
+  
+  .PS_modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 1240px; /* fixed width to mimic original design */
+    height: 900px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10000;
+  }
+  
+  .PS_close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10;
+  }
+  
+  /* =========================
+         PAGE LAYOUT STYLES
+         ========================= */
+  
+  /* Outer container with padding to ensure white space around content */
+  .PS_container {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  /* Main content wrapper: two columns (left: player image; right: stats content) */
+  .PS_content-wrapper {
+    display: flex;
+    flex: 1;
+    margin-top: 20px; /* space above columns */
+  }
+  
+  /* LEFT COLUMN: Player Image with decorative border */
+  .PS_player-image-container {
+    border: 10px solid;
+    border-radius: 10px 0 0 10px;
+    overflow: hidden;
+    width: 250px;
+    height: 800px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    background: #fff;
+  }
+  
+  .PS_player-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* object-position and scale will be set dynamically */
+  }
+  
+  /* RIGHT COLUMN: Contains top banner & bottom content */
+  .PS_right-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 800px;
+    margin-left: 15px;
+    box-sizing: border-box;
+  }
+  
+  /* Top Banner: Player Info */
+  .PS_player-info-banner {
+    margin-bottom: 20px; /* space between banner and bottom section */
+  }
+  
+  /* Use a unique class for the modal banner */
+  .PS_player-banner {
+    min-height: 120px;  /* or any preferred height */
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-radius: 0 10px 0 0;
+    /* background is already set dynamically */
+    color: white;
+  }
+  
+  .PS_team-logo {
+    width: 150px;        /* or 120px, your preference */
+    height: 150px;       /* force a square if you want it consistent */
+    object-fit: contain; /* or cover, but contain often keeps logos intact */
+    margin-right: 20px;
+    flex-shrink: 0;
+  }
+  
+  .PS_player-info h1,
+  .PS_player-info p {
+    margin: 0;
+  }
+  
+  .PS_stats {
+    margin-top: 10px;
+  }
+  
+  .PS_stats span {
+    margin-right: 15px;
+  }
+  
+  /* BOTTOM SECTION: Main Content & Advanced Stats */
+  .PS_bottom-content {
+    display: flex;
+    flex: 1;
+    margin-top: 10px;
+  }
+  
+  /* Main content on left side */
+  .PS_main-content {
+    flex: 1;
+    margin-right: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .PS_tabs {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    gap: 20px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .PS_active-tab {
+    color: blue;
+    font-weight: bold;
+    border-bottom: 2px solid blue;
+  }
+  
+  .PS_upcoming-game {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    /* The background for upcoming game will be set dynamically if needed */
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .PS_opponent-logo {
+    width: 80px;         /* or 100px, etc. */
+    height: 80px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  
+  .PS_game-info {
+    font-size: 16px;
+    text-align: left;
+    color: white;
+  }
+  
+  /* Game log table */
+  .PS_game-log {
+    flex: 1;
+    overflow: auto;
+    margin-bottom: 10px;
+  }
+  
+  .PS_game-log table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .PS_game-log th,
+  .PS_game-log td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .PS_win {
+    color: blue;
+    font-weight: bold;
+  }
+  
+  /* Advanced Stats box on right side */
+  .PS_advanced-stats {
+    width: 250px;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    height: fit-content;
+  }
+  
+  .PS_advanced-stats h2 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    text-align: center;
+  }
+  
+  .PS_advanced-stats p {
+    font-size: 14px;
+    margin: 5px 0;
+  }
+  
