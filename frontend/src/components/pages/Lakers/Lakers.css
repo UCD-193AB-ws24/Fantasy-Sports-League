@@ -1,0 +1,78 @@
+.lakers-container {
+  background-image: url("lakers.png");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  height: 100vh;
+}
+
+/*
+color scheme
+cav wine: #860038
+cav gold: #FDBB30
+black: #000000
+*/
+
+.lakers-wrapper{
+width:20%;
+  background: #552583;
+  padding: 2rem;
+  border-radius: 15px;
+  height:91vh;
+  width:80%;
+  margin-left: -5px;
+  margin-top: -7px;
+}
+.lakers-h1{
+    color: #FDB927;
+  font-size: 1.1rem;
+  font-family: sans-serif;
+}
+.sessions{
+  margin-top: 2rem;
+  border-radius: 12px;
+  position: relative;
+}
+.lakers-times{
+    font-weight: bold;
+  padding-bottom: 1.5rem;
+  border-left: 1px solid #FDB927;
+  position: relative;
+  padding-left: 20px;
+  margin-left: 0px;
+  &:last-child{
+    border: 0px;
+    padding-bottom: 0;
+  }
+  /*
+  lakers purple: #552583
+  lakers gold: #FDB927
+  lakers black; #000000*/
+  &:before{
+    content: '';
+    width: 15px;
+    height: 15px;
+    background: #FDB927;
+    border: 1px solid #4e5ed3;
+    box-shadow: 3px 3px 0px #963821;
+    box-shadow: 3px 3px 0px white;
+    border-radius: 50%;
+    position: absolute;
+    left: -10px;
+    top: 0px;
+  }
+}
+.lakers-time{
+  color: #FDB927;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+
+}
+.lakers-p{
+  color: black;
+  font-family: sans-serif;
+  line-height: 1.5;
+  margin-top:0.4rem;
+}
