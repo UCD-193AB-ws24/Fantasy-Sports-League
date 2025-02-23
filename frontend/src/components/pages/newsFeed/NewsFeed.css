@@ -1,0 +1,64 @@
+.newsContainer{
+    background-color: rgb(44, 43, 43); /* Replace with your desired color */
+    min-height: 100vh; /* Ensure it covers the full viewport height */
+    width: 100%; /* Ensure it covers the full width */
+
+}
+
+.button-35 {
+  align-items: center;
+  background-color: #766666;
+  border-radius: 12px;
+  box-shadow: transparent 0 0 0 3px,rgba(18, 18, 18, .1) 0 6px 20px;
+  box-sizing: border-box;
+  color: #121212;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 1 1 auto;
+  font-family: Inter,sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  outline: none;
+  padding: 1rem 1.2rem;
+  text-align: center;
+  text-decoration: none;
+  transition: box-shadow .2s,-webkit-box-shadow .2s;
+  white-space: nowrap;
+  border: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  margin-left:1%;
+  margin-top:1%;
+}
+
+.button-35:hover {
+  box-shadow: #121212 0 0 0 3px, transparent 0 0 0 0;
+}
+
+.menu-Container-news{
+  background-color: rgb(42, 41, 41);
+}
+.backPage{
+  position:relative;
+  
+}
+a {
+    text-decoration: none;
+    display: inline-block;
+    padding: 8px 16px;
+        
+  }
+  
+  a:hover {
+    background-color: #ddd;
+    color: black;
+  }
+  
+  .previous {
+    background-color: #585151;
+    color: black;
+  }
