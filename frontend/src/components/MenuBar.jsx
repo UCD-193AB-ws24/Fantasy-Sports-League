@@ -37,6 +37,11 @@ const MenuBar = () => {
     },
     {
       id: 5,
+      label: 'Matchups',
+      path: '/Matchups' 
+    },
+    {
+      id: 6,
       label: 'Live Games',
       options: [
         { text: 'NBA', type: 'external', link: "https://www.nba.com/schedule" },

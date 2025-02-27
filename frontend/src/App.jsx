@@ -6,6 +6,7 @@ import RegionalRanks from './components/pages/RegionalRanks'
 import NationalRanks from './components/pages/NationalRanks'
 import InternationalRanks from './components/pages/InternationalRanks'
 import YourRoster from './components/pages/YourRoster';
+import Matchups from './components/pages/Matchups';
 import NewsFeed from './components/pages/newsFeed/NewsFeed';
 import Warriors from './components/pages/GoldenState/GoldenStatemainScreen';
 import Cavaliers from './components/pages/Cavaliers/Cavaliers-mainScreen';
@@ -37,6 +38,7 @@ function App() {
         <Route path="/NationalRankings" element={<NationalRanks />} />  
         <Route path="/InternationalRankings" element={<InternationalRanks />} />  
         <Route path="/YourRoster" element={<YourRoster/>} />
+        <Route path="/Matchups" element={<Matchups/>} />
         <Route path="/NewsFeed" element={<NewsFeed/>} />
         <Route path="/golden-state-warriors" element={<Warriors/>} />
         <Route path="/cleveland-cavaliers" element={<Cavaliers/>}/>

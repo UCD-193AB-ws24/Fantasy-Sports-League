@@ -1,0 +1,209 @@
+/* Page Container: max-width so we don't stretch too far on huge screens */
+.Matchups_page {
+  width: 100%;
+  max-width: 1400px; /* Adjust as you see fit */
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+/* Big Score Styling */
+.Matchups_big-score {
+  font-size: 3rem;
+  margin: 0.5rem 0;
+}
+
+/* Header & Matchup Info */
+.Matchups_header {
+  margin-bottom: 1rem;
+}
+
+.Matchups_matchup-info {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.Matchups_team-info {
+  text-align: center;
+}
+
+.Matchups_vs {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Day Tabs */
+.Matchups_day-tabs {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.Matchups_day-tab {
+  padding: 0.5rem 1rem;
+  margin: 0 0.5rem;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.Matchups_active-tab {
+  background: #0077ff;
+  color: white;
+  font-weight: bold;
+}
+
+/* Courts Layout */
+.Matchups_courts {
+  display: flex;
+  justify-content: space-between; /* Spread out horizontally */
+  align-items: flex-start;
+  margin: 2rem 0;
+  gap: 1rem;
+}
+
+.Matchups_court-section {
+  flex: 0 0 48%; /* Each court ~48% of the container width */
+}
+
+.Matchups_court-section h3 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* Court Container */
+.Matchups_court-container {
+  position: relative;
+  width: 100%;
+  border: 15px solid transparent;
+  border-image: linear-gradient(45deg, #FFA500, #FF0000) 1;
+  border-image-slice: 1;
+}
+
+.Matchups_court-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Team Slots on Court */
+.Matchups_team-slot {
+  position: absolute;
+  width: 90px;
+  height: 70px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, border 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.Matchups_team-slot:hover {
+  background: #f7f7f7;
+}
+
+/* Adjust positions to your liking */
+.Matchups_slot-pg {
+  top: 10%;
+  left: 30%;
+}
+
+.Matchups_slot-sg {
+  bottom: 10%;
+  left: 30%;
+}
+
+.Matchups_slot-g {
+  top: 10%;
+  right: 30%;
+}
+
+.Matchups_slot-util1 {
+  bottom: 10%;
+  right: 30%;
+}
+
+.Matchups_slot-sf {
+  top: 0%;
+  left: 5%;
+}
+
+.Matchups_slot-pf {
+  bottom: 0%;
+  left: 5%;
+}
+
+.Matchups_slot-f {
+  top: 0%;
+  right: 5%;
+}
+
+.Matchups_slot-util2 {
+  bottom: 0%;
+  right: 5%;
+}
+
+.Matchups_slot-c1 {
+  top: 40%;
+  left: 5%;
+}
+
+.Matchups_slot-c2 {
+  top: 40%;
+  right: 5%;
+}
+
+.Matchups_slot-label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #333;
+}
+
+.Matchups_slot-player {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* Comparison Table: narrower container, centered below the courts */
+.Matchups_comparison-table {
+  width: 80%; /* table container narrower than full page */
+  margin: 2rem auto;
+}
+
+.Matchups_comparison-table h3 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.Matchups_comparison-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.Matchups_comparison-table th,
+.Matchups_comparison-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+/* Info icon button */
+.Matchups_info-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 2px;
+}
+
+.Matchups_info-icon {
+  width: 18px;
+  height: 18px;
+}
