@@ -6,7 +6,7 @@ const BostonCelts = ({ onEventClick }) => {
     {
       date: "FEB 20 (PAST)",
       description: "vs. Philadelphia 76ers",
-      images: ["boston2-20.png", "76ers2-20.png"] // Two images
+      images: ["boston2-20.png", "76ers2-20.png"]
     },
     {
       date: "FEB 23",
@@ -41,14 +41,18 @@ const BostonCelts = ({ onEventClick }) => {
   ];
 
   return (
-    <div className="container">
-      <div className="wrapper">
-        <h1>Boston Celtics Schedule</h1>
-        <ul className="sessions">
+    <div className="BostonCelts_container">
+      <div className="BostonCelts_wrapper">
+        <h1 className="BostonCelts_title">Boston Celtics Schedule</h1>
+        <ul className="BostonCelts_sessions">
           {events.map((event, index) => (
-            <li key={index} className="times" onClick={() => onEventClick(event)}>
-              <div className="time">{event.date}</div>
-              <p>{event.description}</p>
+            <li
+              key={index}
+              className="BostonCelts_times"
+              onClick={() => onEventClick(event)}
+            >
+              <div className="BostonCelts_time">{event.date}</div>
+              <p className="BostonCelts_description">{event.description}</p>
             </li>
           ))}
         </ul>
