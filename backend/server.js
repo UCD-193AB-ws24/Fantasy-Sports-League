@@ -17,7 +17,7 @@ app.post('/api/players/getLivePlayerStats', (req, res) => {
     }
 
     // Correct execution path for `player_collection.py`
-    const command = `python3 scripts/player_collection.py live_stats "${playerName}"`;
+    const command = `python3 player_collection.py live_stats "${playerName}"`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
