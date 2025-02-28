@@ -9,6 +9,12 @@ node server.js
 
 Then, open a second terminal instance
 
+To run requests from player_collection.py:
+curl -X POST http://localhost:5001/api/players/getLivePlayerStats \
+     -H "Content-Type: application/json" \
+     -d '{"playerName": "Josh Giddey"}'  
+as an example to get Josh Giddeys live stats
+
 To run requests from player_stats.py:
 
 Use curl -X POST http://localhost:5001/api/players/getPlayerGameLog \
