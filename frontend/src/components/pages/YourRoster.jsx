@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MenuBar from '../MenuBar';
 import { motion, Reorder } from 'framer-motion';
 import PlayerStatsModal from './PlayerStats';
 import './YourRoster.css';
+import { blockquote } from 'framer-motion/client';
 
 const initialPlayers = [
     {
@@ -632,7 +633,77 @@ function YourRoster() {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [modalPlayer, setModalPlayer] = useState(null);
 
-  // Only clicking the portrait (not the whole card) selects a bench player for moving
+  useEffect(() => {
+    const fetchLiveData = async () => {
+      const updatedBench = await Promise.all(
+        bench.map(async (player) => {
+          try {
+            // Call your backend for each player's name
+            const response = await fetch("http://localhost:3000/getPlayerStats", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ playerName: player.name })
+            });
+            const data = await response.json();
+
+            // If there's an active game, compute fantasy points in the frontend
+            if (data && data.game_in_progress) {
+              const points = Number(data.points) || 0;
+              const assists = Number(data.assists) || 0;
+              const rebounds = Number(data.rebounds) || 0;
+              const steals = Number(data.steals) || 0;
+              const blocks = Number(data.blocks) || 0;
+              const turnovers = Number(data.turnovers) || 0;
+
+              const fantasyPoints =
+                (points * 1) +
+                (assists * 1.5) +
+                (rebounds * 1.2) +
+                (steals * 3) +
+                (blocks * 3) -
+                (turnovers * 1);
+
+              return {
+                ...player,
+                // Update the stats if you want them accurate
+                stats: {
+                  ...player.stats,
+                  pts: points,
+                  ast: assists,
+                  reb: rebounds,
+                  st: steals,
+                  blk: blocks,
+                  to: turnovers,
+                },
+                fantasyPoints
+              };
+            } else {
+              // No active game => 0 fantasy points
+              return {
+                ...player,
+                fantasyPoints: 0
+              };
+            }
+          } catch (error) {
+            console.error("Error fetching live stats for", player.name, error);
+            // If request fails, default to 0
+            return {
+              ...player,
+              fantasyPoints: 0
+            };
+          }
+        })
+      );
+      setBench(updatedBench);
+    };
+
+    fetchLiveData();
+    // Poll every 15 seconds
+    const intervalId = setInterval(fetchLiveData, 15000);
+    return () => clearInterval(intervalId);
+  }, [bench]);
+
+  // Select/deselect a bench player
   const handlePlayerClick = (player) => {
     if (selectedPlayer && selectedPlayer.name === player.name) {
       setSelectedPlayer(null);
@@ -641,6 +712,7 @@ function YourRoster() {
     }
   };
 
+  // Style highlight if this is the selected player
   const getGradientBorderStyle = (player) => {
     if (!player || !selectedPlayer || player.name !== selectedPlayer.name) {
       return {};
@@ -653,9 +725,11 @@ function YourRoster() {
     };
   };
 
+  // Place a selected player into a slot or remove if clicked again
   const handleSlotClick = (slotId) => {
     const slot = teamSlots.find((s) => s.id === slotId);
     if (slot.player && selectedPlayer && slot.player.name === selectedPlayer.name) {
+      // Remove from slot
       const updatedTeamSlots = teamSlots.map((s) =>
         s.id === slotId ? { ...s, player: null } : s
       );
@@ -687,6 +761,7 @@ function YourRoster() {
     setSelectedPlayer(null);
   };
 
+  // Return player from slot to bench
   const handleReturnToBench = (slotId) => {
     const slot = teamSlots.find((s) => s.id === slotId);
     if (slot && slot.player) {
@@ -709,6 +784,8 @@ function YourRoster() {
     <div>
       <MenuBar />
       <h1 className="YR_title">Your Roster</h1>
+
+      {/* Court Layout */}
       <div className="YR_court-wrapper">
         <div className="YR_court-container">
           <img
@@ -737,7 +814,10 @@ function YourRoster() {
                         onClick={(e) => e.stopPropagation()}
                       />
                       <div className="YR_fantasy-points">
-                        <strong>Fantasy Points:</strong> 25
+                        <strong>Fantasy Points:</strong>{" "}
+                        {slot.player.fantasyPoints !== undefined
+                          ? slot.player.fantasyPoints.toFixed(2)
+                          : 0}
                       </div>
                       <button
                         className="YR_return-btn"
@@ -767,6 +847,8 @@ function YourRoster() {
           })}
         </div>
       </div>
+
+      {/* Bench Layout */}
       <div className="YR_roster-page">
         <div className="YR_roster-builder">
           <div className="YR_bench">
@@ -795,7 +877,10 @@ function YourRoster() {
                       <div className="YR_player-name">{player.name}</div>
                       <div className="YR_player-positions">{player.position}</div>
                       <div className="YR_player-fantasy-points">
-                        Fantasy Points: 25
+                        Fantasy Points:{" "}
+                        {player.fantasyPoints !== undefined
+                          ? player.fantasyPoints.toFixed(2)
+                          : 0}
                       </div>
                     </div>
                     <button
@@ -814,8 +899,13 @@ function YourRoster() {
           </div>
         </div>
       </div>
+
+      {/* Modal */}
       {modalPlayer && (
-        <PlayerStatsModal player={modalPlayer} onClose={() => setModalPlayer(null)} />
+        <PlayerStatsModal
+          player={modalPlayer}
+          onClose={() => setModalPlayer(null)}
+        />
       )}
     </div>
   );
