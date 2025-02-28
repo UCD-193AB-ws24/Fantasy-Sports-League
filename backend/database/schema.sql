@@ -1,1 +1,29 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
+CREATE TABLE leagues (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    commissioner_id INT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE teams (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    league_id INT REFERENCES leagues(id) ON DELETE CASCADE,
+    team_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE players (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    position VARCHAR(20) NOT NULL,
+    team VARCHAR(50) NOT NULL,
+    fantasy_points DECIMAL DEFAULT 0.0
+);
