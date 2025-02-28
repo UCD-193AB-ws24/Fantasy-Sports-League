@@ -1,12 +1,21 @@
 # Fantasy-Sports-League Backend
 
-Run server:
-node server.mjs
+Running the server:
+First change into backend directory and run:
+node server.js
 
-Use Postman for requests:
-1. Set request type to HTTP Post
-2. Set Address: http://localhost:3000/getPlayerStats
-3. Set request body to "raw" and enter in the following format:
-{"playerName": "First Last"}
+Then, open a second terminal instance
 
-Script will return basic player stats for specified player.
+To run reuqests from player_stats.py:
+
+Use curl -X POST http://localhost:5001/api/players/getPlayerGameLog \
+     -H "Content-Type: application/json" \
+     -d '{"playerName": "Josh Giddey", "season": "2023-24"}'
+as an example to get Josh Giddey game logs
+
+or use curl -X POST http://localhost:5001/api/players/getPlayerCareerStats \
+     -H "Content-Type: application/json" \
+     -d '{"playerName": "Josh Giddey"}'
+as an example to get Josh Giddey career stats
+
+Script will return basic player stats for specified player
