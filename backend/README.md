@@ -6,7 +6,7 @@ node server.js
 
 Then, open a second terminal instance
 
-To run reuqests from player_stats.py:
+To run requests from player_stats.py:
 
 Use curl -X POST http://localhost:5001/api/players/getPlayerGameLog \
      -H "Content-Type: application/json" \
@@ -19,3 +19,8 @@ or use curl -X POST http://localhost:5001/api/players/getPlayerCareerStats \
 as an example to get Josh Giddey career stats
 
 Script will return basic player stats for specified player
+
+To test without running the server, change into scripts directory and run:
+python3 scripts/player_stats.py game_log "Josh Giddey"
+
+to print Josh Giddeys game logs for the season 
