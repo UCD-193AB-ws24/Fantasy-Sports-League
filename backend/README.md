@@ -1,5 +1,8 @@
 # Fantasy-Sports-League Backend
 
+Dependencies to install:
+npm install express dotenv cors pg child_process
+
 Running the server:
 First change into backend directory and run:
 node server.js
