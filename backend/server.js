@@ -1,13 +1,70 @@
+// import express from 'express';
+// import cors from 'cors';
+// import { exec } from 'child_process';
+
+// const app = express();
+// const PORT = 5001;
+// const bcrypt = require('bcrypt');
+// const { PrismaClient } = require('@prisma/client');
+
+// const prisma = new PrismaClient();
+
+
+// // Middleware
+// app.use(cors());
+// app.use(express.json());
+
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import { exec } from 'child_process';
+import bcrypt from 'bcrypt';
+import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
+import { data } from 'react-router-dom';
 
+dotenv.config();
 const app = express();
+const prisma = new PrismaClient();
 const PORT = 5001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
+
+// User registration route
+app.post('/register', async (req, res) => {
+    const { name, email, phone, username, password } = req.body;
+
+    try {
+        // Check if the user already exists
+        const existingUser = await prisma.users.findUnique({
+            where: { email }
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already in use" });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // console.log("Prisma client models:", prisma);
+
+        // Create the user
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword
+            }
+        });
+        res.status(201).json({ message: "User registered successfully", user });
+    } catch (error) {
+        console.error("Registration error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+
 
 app.post('/api/players/getLivePlayerStats', (req, res) => {
     const { playerName } = req.body;
