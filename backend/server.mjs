@@ -15,7 +15,7 @@ app.post('/getPlayerStats', (req, res) => {
     return res.status(400).json({ error: "Player name is required" });
   }
   // Use 'python' (or full path to python.exe) so Windows finds it
-  const command = `python player_collection.py "${playerName}"`;
+  const command = `python3 player_collection.py "${playerName}"`;
   console.log("Executing command:", command);
   exec(command, (error, stdout, stderr) => {
     if (error) {
