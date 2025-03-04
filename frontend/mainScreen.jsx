@@ -76,23 +76,4 @@ const MainScreen = () => {
   );
 };
 
-// Styling for the Login Button
-const styles = {
-  loginButtonContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: '20px',
-  },
-  loginButton: {
-    backgroundColor: '#007bff',
-    color: '#fff',
-    padding: '12px 24px',
-    fontSize: '16px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginTop: '20px',
-  },
-};
-
 export default MainScreen;
