@@ -16,8 +16,8 @@ datasource db {
 
 //to add in this database:
 //users
-//live stats
-//prior stats
+//live stats + prior stats (currently as one table)
+//leagues
 //player's roster - must have userId associated
 
 model users {
@@ -28,6 +28,7 @@ model users {
   createdAt DateTime @db.Timestamptz(6)
   updatedAt DateTime @db.Timestamptz(6)
   rostersIds String[] @db.VarChar(255)
+  password String   @db.VarChar(255)
 }
 
 //models for stats of a single game
