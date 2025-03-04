@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import MainScreen from './components/mainScreen';
+import LoginPage from './components/loginPage';
 import RegisterPage from '../src/components/pages/registerPage'
 import RegionalRanks from './components/pages/RegionalRanks'
 import NationalRanks from './components/pages/NationalRanks'
@@ -12,6 +13,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<MainScreen />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/RegionalRankings" element={<RegionalRanks />} /> 
         <Route path="/NationalRankings" element={<NationalRanks />} />  
