@@ -19,15 +19,15 @@ datasource db {
 //leagues
 //player's roster - must have userId associated
 
-model users {
-  id         String   @id @db.VarChar(255)
-  name       String   @db.VarChar(255)
-  email      String   @unique @db.VarChar(255)
-  picture    String?  @db.VarChar(255)
-  createdAt  DateTime @db.Timestamptz(6)
-  updatedAt  DateTime @db.Timestamptz(6)
-  rostersIds String[] @db.VarChar(255)
-  password   String   @db.VarChar(255)
+model user {
+  id        String    @id @default(uuid()) @db.VarChar(255)
+  name      String    @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  picture   String?   @db.VarChar(255)
+  createdAt DateTime  @db.Timestamptz(6)
+  updatedAt DateTime? @db.Timestamptz(6)
+  rosterIds String[]  @db.VarChar(255)
+  password  String    @db.VarChar(255)
 }
 
 //models for stats of a single game

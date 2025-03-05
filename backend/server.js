@@ -21,6 +21,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { data } from 'react-router-dom';
+import { create } from 'domain';
 
 dotenv.config();
 const app = express();
@@ -30,13 +31,16 @@ const PORT = 5001;
 app.use(cors());
 app.use(express.json());
 
+console.log("Available Prisma models:", Object.keys(prisma));
+
+
 // User registration route
 app.post('/register', async (req, res) => {
     const { name, email, phone, username, password } = req.body;
 
     try {
         // Check if the user already exists
-        const existingUser = await prisma.users.findUnique({
+        const existingUser = await prisma.user.findUnique({
             where: { email }
         });
 
@@ -54,6 +58,8 @@ app.post('/register', async (req, res) => {
             data: {
                 name,
                 email,
+                createdAt: new Date(), // Set createdAt to current date/time
+                rosterIds: [],
                 password: hashedPassword
             }
         });
@@ -63,8 +69,6 @@ app.post('/register', async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
-
-
 
 app.post('/api/players/getLivePlayerStats', (req, res) => {
     const { playerName } = req.body;
