@@ -12,38 +12,47 @@ def get_player_id(player_name):
     return None
 
 def get_player_game_log(player_name, season="2023-24"):
-    """ Fetch player's game log for a specific season """
-    
+    """Fetch player's game log for a specific season and format stats correctly."""
+
     player_id = get_player_id(player_name)
-            
+    
     if not player_id:
         return json.dumps({"error": f"Player '{player_name}' not found in NBA API"}, indent=4)
 
     try:
         game_log = playergamelog.PlayerGameLog(player_id=player_id, season=season)
         games = game_log.get_dict()["resultSets"][0]["rowSet"]
+        headers = game_log.get_dict()["resultSets"][0]["headers"]  # Column names
 
         if not games:
             return json.dumps({"error": f"No game logs found for {player_name} in {season}"}, indent=4)
 
-        formatted_games = [
-            {
-                "date": game[3],
-                "matchup": game[4],
-                "points": game[26],
-                "rebounds": game[20],
-                "assists": game[21],
-                "steals": game[22],
-                "blocks": game[23],
-                "turnovers": game[24],
-                "fg": f"{game[9]}/{game[10]} ({game[11]}%)",
-                "3pt": f"{game[12]}/{game[13]} ({game[14]}%)",
-                "ft": f"{game[15]}/{game[16]} ({game[17]}%)"
-            }
-            for game in games
-        ]
+        formatted_games = []
+        for game in games:
+            game_stats = dict(zip(headers, game))  # Map headers to values dynamically
 
-        return json.dumps({"player": player_name, "season": season, "games": formatted_games}, indent=4)
+            formatted_games.append({
+                "date": game_stats.get("GAME_DATE", "N/A"),
+                "matchup": game_stats.get("MATCHUP", "N/A"),
+                "points": game_stats.get("PTS", 0),
+                "rebounds": game_stats.get("REB", 0),
+                "assists": game_stats.get("AST", 0),
+                "steals": game_stats.get("STL", 0),
+                "blocks": game_stats.get("BLK", 0),
+                "turnovers": game_stats.get("TOV", 0),
+                "fg": f"{game_stats.get('FGM', 0)}/{game_stats.get('FGA', 0)}",
+                "3pt": f"{game_stats.get('FG3M', 0)}/{game_stats.get('FG3A', 0)}",
+                "ft": f"{game_stats.get('FTM', 0)}/{game_stats.get('FTA', 0)}",
+                "fg_percentage": f"{game_stats.get('FG_PCT', 0) * 100:.1f}%",
+                "3pt_percentage": f"{game_stats.get('FG3_PCT', 0) * 100:.1f}%",
+                "ft_percentage": f"{game_stats.get('FT_PCT', 0) * 100:.1f}%"
+            })
+
+        return json.dumps({
+            "player": player_name,
+            "season": season,
+            "games": formatted_games
+        }, indent=4)
 
     except Exception as e:
         return json.dumps({"error": f"Failed to fetch game log: {str(e)}"}, indent=4)
