@@ -1,0 +1,95 @@
+/* Sidebar container */
+.sidebar {
+    width: 250px;
+    background-color: #222;
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* Sidebar title */
+  .sidebar-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  /* Main menu styles */
+  .menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .menu li {
+    margin-bottom: 10px;
+  }
+  
+  /* Style for links and buttons */
+  .menu a, .menu-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+    text-decoration: none; /* Removes underline from links */
+  }
+  
+  .menu a:hover, .menu-btn:hover {
+    background-color: #444;
+  }
+  
+  
+  /* Triangle indicator */
+  .triangle {
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.3s ease;
+  }
+  
+  /* Default sideways triangle (▶) */
+  .triangle::before {
+    content: "▶";
+  }
+  
+  /* Rotated downward triangle (▼) */
+  .triangle.open::before {
+    content: "▼";
+  }
+  
+  /* Submenu styles */
+  .submenu {
+    list-style: none;
+    padding-left: 20px;
+    margin-top: 5px;
+    display: none;
+  }
+  
+  .submenu.open {
+    display: block;
+  }
+  
+  .submenu li {
+    margin-bottom: 8px;
+  }
+  
+  .submenu a {
+    text-decoration: none;
+    color: white;
+    display: block;
+    padding: 8px;
+    font-size: 1.5rem;
+    border-radius: 4px;
+  }
+  
+  .submenu a:hover {
+    background-color: #555;
+  }
+  
