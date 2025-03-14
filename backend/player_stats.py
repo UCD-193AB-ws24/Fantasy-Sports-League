@@ -11,7 +11,7 @@ def get_player_id(player_name):
             return player["id"]
     return None
 
-def get_player_game_log(player_name, season="2023-24"):
+def get_player_game_log(player_name, season="2024-25"):
     """Fetch player's game log for a specific season and format stats correctly."""
 
     player_id = get_player_id(player_name)
@@ -20,7 +20,7 @@ def get_player_game_log(player_name, season="2023-24"):
         return json.dumps({"error": f"Player '{player_name}' not found in NBA API"}, indent=4)
 
     try:
-        game_log = playergamelog.PlayerGameLog(player_id=player_id, season=season)
+        game_log = playergamelog.PlayerGameLog(player_id=player_id, season=season, timeout=60)
         games = game_log.get_dict()["resultSets"][0]["rowSet"]
         headers = game_log.get_dict()["resultSets"][0]["headers"]  # Column names
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     command = sys.argv[1]
 
     player_name = " ".join(sys.argv[2:-1]) if len(sys.argv) > 3 else sys.argv[2]
-    season = sys.argv[-1] if len(sys.argv) > 3 else "2023-24"
+    season = sys.argv[-1] if len(sys.argv) > 3 else "2024-25"
 
     if command == "game_log":
         result = get_player_game_log(player_name, season)

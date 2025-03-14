@@ -80,6 +80,9 @@ const MainScreen = () => {
               )}
 
         </div>
+         <a href="http://localhost:5001/auth/google">
+                        <button className="profilepage-login-with-google-btn">Login with Google</button>
+          </a>
 
         {backgrounds[index].showSignIn ? (
           <div className="login-container">

@@ -20,55 +20,127 @@ datasource db {
 //player's roster - must have userId associated
 
 model user {
-  id        String    @id @default(uuid()) @db.VarChar(255)
-  name      String    @db.VarChar(255)
-  email     String    @unique @db.VarChar(255)
-  picture   String?   @db.VarChar(255)
-  createdAt DateTime  @db.Timestamptz(6)
-  updatedAt DateTime? @db.Timestamptz(6)
-  rosterIds String[]  @db.VarChar(255)
-  password  String    @db.VarChar(255)
+  id        Int            @id @default(autoincrement())
+  googleID  String?        @unique
+  name      String         @db.VarChar(255)
+  email     String         @unique @db.VarChar(255)
+  picture   String?        @db.VarChar(255)
+  createdAt DateTime       @db.Timestamptz(6)
+  updatedAt DateTime?      @db.Timestamptz(6)
+  rosterIds String[]       @db.VarChar(255)
+  password  String         @db.VarChar(255)
+  leagueId  Int?
+  league    League?        @relation(fields: [leagueId], references: [id])
+  roster    LeaguePlayer[] @relation("UserRoster")
+}
+
+model Player {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  team          String?
+  positions     String[] // Allows multiple positions
+  positionGroup String[] // checks for if player is (guard/forward, forward/center) etc
+  jersey        Int? // New: Jersey number for each player
+  rank          Int? // New: Optional rank for the player
+  gamesPlayed   Int? // New: Number of games the player has 
+  totalFanPts   Int? // New: Total Number of FantasyPoints
+  stats         playerStats[]
+  leaguePlayers LeaguePlayer[]
+  rosterPlayers rosterPlayer[]
+}
+
+model Game {
+  id          Int           @id @default(autoincrement())
+  date        DateTime      @db.Timestamptz(6)
+  matchup     String
+  finalScore  String? // New: Final game score for the game
+  playerStats playerStats[]
+
+  @@unique([date, matchup], name: "date_matchup")
 }
 
 //models for stats of a single game
 model playerStats {
-  id               String   @id @db.VarChar(255)
+  id               Int      @id @default(autoincrement())
+  playerId         Int
+  gameId           Int
   points           Int      @db.Integer
   rebounds         Int      @db.Integer
   assists          Int      @db.Integer
   steals           Int      @db.Integer
   blocks           Int      @db.Integer
   turnovers        Int      @db.Integer
-  fg               Int      @db.Integer
-  threePoint       Int      @db.Integer
-  ft               Int      @db.Integer
+  fg               String
+  threePoint       String
+  ft               String
+  minutes          Int? // New: Minutes played in the game
+  fantasyPoints    Float? // New: Fantasy points calculated per game
   matchup          String   @db.VarChar(255)
   game_in_progress Boolean  @db.Boolean
   game_date        DateTime @db.Timestamptz(6)
+
+  player Player @relation(fields: [playerId], references: [id])
+  game   Game   @relation(fields: [gameId], references: [id])
+
+  @@unique([playerId, gameId], name: "playerId_gameId")
 }
 
 model roster {
-  id        String   @id @db.VarChar(255)
-  userId    String   @db.VarChar(255)
-  teamName  String   @db.VarChar(255)
-  leagueId  String   @db.VarChar(255)
-  players   String[] @db.VarChar(255)
-  createdAt DateTime @db.Timestamptz(6)
-  updatedAt DateTime @db.Timestamptz(6)
+  id        Int            @id @default(autoincrement())
+  userId    Int            
+  teamName  String         @db.VarChar(255)
+  leagueId  Int?
+  players   rosterPlayer[]
+  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime       @default(now()) @db.Timestamptz(6)
+  wins      Int            @default(0) // New: Wins for the roster
+  losses    Int            @default(0) // New: Losses for the roster
 }
 
-model league {
-  id             String    @id @db.VarChar(255)
-  name           String    @db.VarChar(255)
-  commissionerId String    @db.VarChar(255)
-  createdAt      DateTime  @db.Timestamptz(6)
-  updatedAt      DateTime  @db.Timestamptz(6)
-  scoringFormat  String    @db.VarChar(255)
-  maxTeams       Int       @db.Integer
-  usersIds       String[]  @db.VarChar(255) // List of user IDs in the league
-  draftType      String    @db.VarChar(255) // e.g., "Snake", "Auction", "Linear"
-  draftDate      DateTime? @db.Timestamptz(6)
-  tradeDeadline  DateTime? @db.Timestamptz(6)
-  waiverType     String    @db.VarChar(255) // e.g., "FAAB", "Rolling", "None" etc
-  isPrivate      Boolean   @default(true) @db.Boolean
+model team {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(255)
+}
+
+model LeaguePlayer {
+  id            Int  @id @default(autoincrement())
+  leagueId      Int
+  playerId      Int
+  // If null, the player is available in the league’s player_list.
+  // If set, this player has been claimed and is now part of a user’s roster.
+  rosterOwnerId Int?
+
+  league      League @relation(fields: [leagueId], references: [id])
+  player      Player @relation(fields: [playerId], references: [id])
+  rosterOwner user?  @relation("UserRoster", fields: [rosterOwnerId], references: [id])
+}
+
+model League {
+  id             Int            @id @default(autoincrement())
+  name           String         @db.VarChar(255)
+  commissionerId String         @db.VarChar(255)
+  createdAt      DateTime       @db.Timestamptz(6)
+  updatedAt      DateTime       @db.Timestamptz(6)
+  scoringFormat  String         @db.VarChar(255)
+  maxTeams       Int            @db.Integer
+  draftType      String         @db.VarChar(255) // e.g., "Snake", "Auction", "Linear"
+  draftDate      DateTime?      @db.Timestamptz(6)
+  tradeDeadline  DateTime?      @db.Timestamptz(6)
+  waiverType     String         @db.VarChar(255) // e.g., "FAAB", "Rolling", "None" etc
+  isPrivate      Boolean        @default(true) @db.Boolean
+  users          user[]
+  leaguePlayers  LeaguePlayer[]
+}
+
+model rosterPlayer {
+  id        Int      @id @default(autoincrement())
+  rosterId  Int
+  roster    roster   @relation(fields: [rosterId], references: [id])
+  playerId  Int
+  player    Player   @relation(fields: [playerId], references: [id])
+  position  String // Store the position assignment (PG, SG, etc.)
+  isBench   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([rosterId, playerId])
 }

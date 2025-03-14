@@ -1,12 +1,12 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import MainScreen from './components/mainScreen';
-import RegisterPage from './components/pages/registerPage';
-import LoginPage from './components/pages/loginPage';
-import RegionalRanks from './components/pages/RegionalRanks';
-import NationalRanks from './components/pages/NationalRanks';
-import InternationalRanks from './components/pages/InternationalRanks';
+import RegisterPage from '../src/components/pages/registerPage'
+import RegionalRanks from './components/pages/RegionalRanks'
+import NationalRanks from './components/pages/NationalRanks'
+import InternationalRanks from './components/pages/InternationalRanks'
 import YourRoster from './components/pages/YourRoster';
+import PlayerList from './components/pages/Player_List';
 import Matchups from './components/pages/Matchups';
 import NewsFeed from './components/pages/newsFeed/NewsFeed';
 import Warriors from './components/pages/GoldenState/GoldenStatemainScreen';
@@ -16,43 +16,45 @@ import Mavericks from './components/pages/Mavericks/MavericksmainScreen';
 import Clippers from './components/pages/Clippers/ClippersmainScreen';
 import Bulls from './components/pages/Bulls/Bulls-mainScreen';
 import Heats from './components/pages/Heats/HeatsmainScreen';
-import Knicks from './components/pages/Knicks/KnicksmainScreen';
+import Knicks from './components/pages/Knicks/KnicksmainScreen'; 
+import DashBoard from './DashBoard';
+import ProfilePage from './ProfilePage';
+import PublicLeague from './components/PublicLeague'; // Import the PublicLeague component
 
-// Function to check if user is authenticated (Token exists in localStorage)
-const isAuthenticated = () => {
-  const token = localStorage.getItem('token');
-  return token && token !== 'null' && token !== 'undefined';
-};
-
-// Higher-order component for Protected Routes
-const ProtectedRoute = ({ element }) => {
-  return isAuthenticated() ? element : <Navigate to="/login" replace />;
-};
-
+/*
+    { id: 2, label: "Golden State Warriors", path: "/golden-state-warriors" },
+    { id: 3, label: "LA Lakers", path: "/la-lakers" },
+    { id: 4, label: "Dallas Mavericks", path: "/dallas-mavericks" },
+    { id: 5, label: "LA Clippers", path: "/la-clippers" },
+    { id: 6, label: "New York Knicks", path: "/new-york-knicks" },
+    { id: 7, label: "Chicago Bulls", path: "/chicago-bulls" },
+    { id: 8, label: "Cleveland Cavaliers", path: "/cleveland-cavaliers" },
+    { id: 9, label: "Miami Heat", path: "/miami-heat" },*/ 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes - Accessible by anyone */}
         <Route path="/" element={<MainScreen />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* Protected Routes - Requires Authentication */}
-        <Route path="/RegionalRankings" element={<ProtectedRoute element={<RegionalRanks />} />} />
-        <Route path="/NationalRankings" element={<ProtectedRoute element={<NationalRanks />} />} />
-        <Route path="/InternationalRankings" element={<ProtectedRoute element={<InternationalRanks />} />} />
-        <Route path="/YourRoster" element={<ProtectedRoute element={<YourRoster />} />} />
-        <Route path="/Matchups" element={<ProtectedRoute element={<Matchups />} />} />
-        <Route path="/NewsFeed" element={<ProtectedRoute element={<NewsFeed />} />} />
-        <Route path="/Warriors" element={<ProtectedRoute element={<Warriors />} />} />
-        <Route path="/Cavaliers" element={<ProtectedRoute element={<Cavaliers />} />} />
-        <Route path="/Lakers" element={<ProtectedRoute element={<Lakers />} />} />
-        <Route path="/Mavericks" element={<ProtectedRoute element={<Mavericks />} />} />
-        <Route path="/Clippers" element={<ProtectedRoute element={<Clippers />} />} />
-        <Route path="/Bulls" element={<ProtectedRoute element={<Bulls />} />} />
-        <Route path="/Heats" element={<ProtectedRoute element={<Heats />} />} />
-        <Route path="/Knicks" element={<ProtectedRoute element={<Knicks />} />} />
+        <Route path="/RegionalRankings" element={<RegionalRanks />} /> 
+        <Route path="/NationalRankings" element={<NationalRanks />} />  
+        <Route path="/InternationalRankings" element={<InternationalRanks />} />  
+        <Route path="/YourRoster" element={<YourRoster/>} />
+        <Route path="/Matchups" element={<Matchups/>} />
+        <Route path="/PlayerList" element={<PlayerList/>} />
+        <Route path="/NewsFeed" element={<NewsFeed/>} />
+        <Route path="/golden-state-warriors" element={<Warriors/>} />
+        <Route path="/cleveland-cavaliers" element={<Cavaliers/>}/>
+        <Route path="/la-lakers" element={<Lakers/>} />
+        <Route path="/dallas-mavericks" element={<Mavericks/>} />
+        <Route path="/la-clippers" element={<Clippers/>} />
+        <Route path="/la-lakers" element={<Lakers/>} />
+        <Route path="/chicago-bulls" element={<Bulls/>} />
+        <Route path="/miami-heat" element={<Heats/>} />
+        <Route path="/new-york-knicks" element={<Knicks/>} />
+        <Route path="DashBoard" element={<DashBoard/>} />
+        <Route path="ProfilePage" element={<ProfilePage/>} />
+        <Route path="/PublicLeague" element={<PublicLeague />} /> {/* Add route for PublicLeague */}
       </Routes>
     </Router>
   );

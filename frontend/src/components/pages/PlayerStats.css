@@ -37,8 +37,8 @@
   }
   
   /* =========================
-         PAGE LAYOUT STYLES
-         ========================= */
+     PAGE LAYOUT STYLES
+     ========================= */
   
   /* Outer container with padding to ensure white space around content */
   .PS_container {
@@ -183,8 +183,12 @@
   
   /* Game log table */
   .PS_game-log {
+    /* ADDED: sets a max height so it scrolls instead of pushing content off the page */
+    max-height: 300px; /* Adjust as needed (e.g., 250px, 350px, etc.) */
+    overflow-y: auto;
+  
+    /* Existing properties */
     flex: 1;
-    overflow: auto;
     margin-bottom: 10px;
   }
   
@@ -226,4 +230,25 @@
     font-size: 14px;
     margin: 5px 0;
   }
+
+.PS_drop-button-container {
+  margin-top: 15px;
+  text-align: center;
+  padding-bottom: 15px;
+}
+
+.PS_drop-button {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.PS_drop-button:hover {
+  background-color: #c9302c;
+}
   

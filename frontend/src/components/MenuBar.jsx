@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import './MenuBar.css';
 import { useNavigate } from 'react-router-dom';
 
-
 const MenuBar = () => {
   const navigate = useNavigate();
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -17,7 +16,7 @@ const MenuBar = () => {
       id: 2,
       label: 'Leagues',
       options: [
-        { text: 'Public' },
+        { text: 'Public', type: 'internal', path: '/PublicLeague' }, // Update to navigate to PublicLeague
         { text: 'Private' },
       ],
     },
@@ -42,6 +41,11 @@ const MenuBar = () => {
     },
     {
       id: 6,
+      label: 'Player List',
+      path: '/PlayerList' 
+    },
+    {
+      id: 7,
       label: 'Live Games',
       options: [
         { text: 'NBA', type: 'external', link: "https://www.nba.com/schedule" },
