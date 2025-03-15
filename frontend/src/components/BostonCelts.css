@@ -1,0 +1,86 @@
+@mixin tablet-and-up {
+  @media screen and (min-width: 769px) { @content; }
+}
+@mixin mobile-and-up {
+  @media screen and (min-width: 601px) { @content; }
+}
+@mixin tablet-and-down  {
+  @media screen and (max-width: 768px) { @content; }
+}
+@mixin mobile-only {
+  @media screen and (max-width: 600px) { @content; }
+}
+
+/* Scope ul and li to the BostonCelts container */
+.BostonCelts_container ul,
+.BostonCelts_container li {
+list-style: none;
+padding: 0;
+}
+
+.BostonCelts_wrapper {
+/* Adjusted width as per original conflicting values */
+background: white;
+padding: 2rem;
+border-radius: 15px;
+height: 91vh;
+width: 80%;
+margin-left: -5px;
+margin-top: -7px;
+}
+
+.BostonCelts_title {
+color: #007A33;
+font-size: 1.1rem;
+font-family: sans-serif;
+}
+
+.BostonCelts_sessions {
+margin-top: 2rem;
+border-radius: 12px;
+position: relative;
+}
+
+.BostonCelts_times {
+font-weight: bold;
+padding-bottom: 1.5rem;
+border-left: 1px solid #007A33;
+position: relative;
+padding-left: 20px;
+margin-left: 0px;
+}
+.BostonCelts_times:last-child {
+border: 0;
+padding-bottom: 0;
+}
+
+/* 
+gold: #BA9653
+green: #007A33
+red: #963821 
+*/
+.BostonCelts_times:before {
+content: '';
+width: 15px;
+height: 15px;
+background: #007A33;
+border: 1px solid #4e5ed3;
+box-shadow: 3px 3px 0px #08b14e;
+border-radius: 50%;
+position: absolute;
+left: -10px;
+top: 0;
+}
+
+.BostonCelts_time {
+color: #007A33;
+font-family: 'Poppins', sans-serif;
+font-weight: bold;
+}
+
+.BostonCelts_description {
+color: #BA9653;
+font-family: sans-serif;
+line-height: 1.5;
+margin-top: 0.4rem;
+}

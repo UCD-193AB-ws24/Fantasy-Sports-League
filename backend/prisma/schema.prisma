@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") //change later to proper url
+}
+
+//to add in this database:
+//users
+//live stats + prior stats (currently as one table)
+//leagues
+//player's roster - must have userId associated
+
+model user {
+  id        Int            @id @default(autoincrement())
+  name      String         @db.VarChar(255)
+  email     String         @unique @db.VarChar(255)
+  picture   String?        @db.VarChar(255)
+  createdAt DateTime       @db.Timestamptz(6)
+  updatedAt DateTime?      @db.Timestamptz(6)
+  rosterIds String[]       @db.VarChar(255)
+  password  String         @db.VarChar(255)
+  leagueId  Int?
+  googleID  String?        @unique // Add this field for Google OAuth
+  teamName  String?
+  league    League?        @relation(fields: [leagueId], references: [id])
+  roster    LeaguePlayer[] @relation("UserRoster")
+}
+
+model Player {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  team          String?
+  positions     String[] // Allows multiple positions
+  positionGroup String[] // checks for if player is (guard/forward, forward/center) etc
+  jersey        Int? // New: Jersey number for each player
+  rank          Int? // New: Optional rank for the player
+  gamesPlayed   Int? // New: Number of games the player has 
+  totalFanPts   Int? // New: Total Number of FantasyPoints
+  stats         playerStats[]
+  leaguePlayers LeaguePlayer[]
+  rosterPlayers rosterPlayer[]
+}
+
+model Game {
+  id          Int           @id @default(autoincrement())
+  date        DateTime      @db.Timestamptz(6)
+  matchup     String
+  finalScore  String? // New: Final game score for the game
+  playerStats playerStats[]
+
+  @@unique([date, matchup], name: "date_matchup")
+}
+
+//models for stats of a single game
+model playerStats {
+  id               Int      @id @default(autoincrement())
+  playerId         Int
+  gameId           Int
+  points           Int      @db.Integer
+  rebounds         Int      @db.Integer
+  assists          Int      @db.Integer
+  steals           Int      @db.Integer
+  blocks           Int      @db.Integer
+  turnovers        Int      @db.Integer
+  fg               String
+  threePoint       String
+  ft               String
+  minutes          String? // New: Minutes played in the game
+  fantasyPoints    Float? // New: Fantasy points calculated per game
+  matchup          String   @db.VarChar(255)
+  game_in_progress Boolean  @db.Boolean
+  game_date        DateTime @db.Timestamptz(6)
+
+  player Player @relation(fields: [playerId], references: [id])
+  game   Game   @relation(fields: [gameId], references: [id])
+
+  @@unique([playerId, gameId], name: "playerId_gameId")
+}
+
+model roster {
+  id        Int            @id @default(autoincrement())
+  userId    Int            
+  teamName  String         @db.VarChar(255)
+  leagueId  Int?
+  players   rosterPlayer[]
+  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime       @default(now()) @db.Timestamptz(6)
+}
+
+model LeaguePlayer {
+  id            Int  @id @default(autoincrement())
+  leagueId      Int
+  playerId      Int
+  // If null, the player is available in the league’s player_list.
+  // If set, this player has been claimed and is now part of a user’s roster.
+  rosterOwnerId Int?
+
+  league      League @relation(fields: [leagueId], references: [id])
+  player      Player @relation(fields: [playerId], references: [id])
+  rosterOwner user?  @relation("UserRoster", fields: [rosterOwnerId], references: [id])
+}
+
+model League {
+  id             Int            @id @default(autoincrement())
+  name           String         @db.VarChar(255)
+  commissionerId String         @db.VarChar(255)
+  createdAt      DateTime       @db.Timestamptz(6)
+  updatedAt      DateTime       @db.Timestamptz(6)
+  scoringFormat  String         @db.VarChar(255)
+  maxTeams       Int            @db.Integer
+  draftType      String         @db.VarChar(255) // e.g., "Snake", "Auction", "Linear"
+  draftDate      DateTime?      @db.Timestamptz(6)
+  tradeDeadline  DateTime?      @db.Timestamptz(6)
+  waiverType     String         @db.VarChar(255) // e.g., "FAAB", "Rolling", "None" etc
+  isPrivate      Boolean        @default(true) @db.Boolean
+  users          user[]
+  leaguePlayers  LeaguePlayer[]
+}
+
+model rosterPlayer {
+  id        Int      @id @default(autoincrement())
+  rosterId  Int
+  roster    roster   @relation(fields: [rosterId], references: [id])
+  playerId  Int
+  player    Player   @relation(fields: [playerId], references: [id])
+  position  String // Store the position assignment (PG, SG, etc.)
+  isBench   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([rosterId, playerId])
+}

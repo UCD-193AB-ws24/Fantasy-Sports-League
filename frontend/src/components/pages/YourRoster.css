@@ -1,0 +1,272 @@
+/* Overall Page */
+.YR_roster-page {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.YR_title {
+  margin: 1rem;
+  text-align: center;
+}
+
+/* Centering the court container with flex */
+.YR_court-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+/* The court container shrink-wraps the image */
+.YR_court-container {
+  position: relative;
+  display: inline-block;
+  border: 15px solid transparent;
+  border-image: linear-gradient(45deg, #FFA500, #FF0000) 1;
+  border-image-slice: 1;
+}
+
+/* Court image */
+.YR_court-image {
+  display: block;
+  width: 800px;  /* Adjust as needed */
+  height: auto;
+}
+
+/* Team slots positioned over the court image */
+.YR_team-slot {
+  position: absolute;
+  width: 80px;
+  height: 60px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, border 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.YR_team-slot:hover {
+  background: #f7f7f7;
+}
+
+/* Example slot positions (adjust as desired) */
+.slot-pg {
+  top: 10%;
+  left: 30%;
+}
+
+.slot-sg {
+  bottom: 10%;
+  left: 30%;
+}
+
+.slot-g {
+  top: 10%;
+  right: 30%;
+}
+
+.slot-sf {
+  top: 0%;
+  left: 5%;
+}
+
+.slot-pf {
+  bottom: 15%;
+  left: 12%;
+}
+
+.slot-f {
+  top: 0%;
+  right: 5%;
+}
+
+.slot-c-1 {
+  top: 45%;
+  left: 5%;
+}
+
+.slot-c-2 {
+  top: 45%;
+  right: 5%;
+}
+
+.slot-util-1 {
+  bottom: 10%;
+  right: 30%;
+}
+
+.slot-util-2 {
+  bottom: 15%;
+  right: 12%;
+}
+
+/* IL slots on the sideline (left side) */
+.slot-il-1 {
+  bottom: -20%;
+  left: 30%;
+}
+
+.slot-il-2 {
+  bottom: -20%;
+  left: 45%;
+}
+
+.slot-il-3 {
+  bottom: -20%;
+  left: 60%;
+}
+
+/* Slot content */
+.YR_slot-label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #333;
+}
+
+.YR_slot-player {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.YR_slot-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.YR_slot-player-name {
+  cursor: pointer;
+}
+
+.YR_fantasy-points {
+  margin-top: 0.3rem;
+  padding: 3px 6px;
+  background-color: #f2f2f2;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #333;
+}
+
+/* Bench Layout */
+.YR_roster-builder {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.YR_bench {
+  flex: 1;
+  min-width: 300px;
+}
+
+.YR_bench h2 {
+  color: #0077ff;
+  margin-bottom: 0.5rem;
+}
+
+/* Grid of 7 columns for bench cards */
+.YR_bench-list {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.YR_bench-item {
+  cursor: grab;
+  user-select: none;
+}
+
+/* Uniform Bench Card */
+.YR_player-card {
+  width: 160px;
+  height: 300px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+
+.YR_player-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.YR_player-portrait {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.YR_player-card-content {
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.YR_player-name {
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+.YR_player-positions {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.2rem;
+}
+
+.YR_player-fantasy-points {
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.YR_info-btn {
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.YR_info-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Court Slot Portrait */
+.YR_court-slot-portrait {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Add to YourRoster.css */
+.YR_live-indicator {
+  color: red;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+

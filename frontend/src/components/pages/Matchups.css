@@ -1,0 +1,321 @@
+/* Page Container: max-width so we don't stretch too far on huge screens */
+.Matchups_page {
+  width: 100%;
+  max-width: 1400px; /* Adjust as you see fit */
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+/* Big Score Styling */
+.Matchups_big-score {
+  font-size: 3rem;
+  margin: 0.5rem 0;
+}
+
+/* Header & Matchup Info */
+.Matchups_header {
+  margin-bottom: 1rem;
+}
+
+.Matchups_matchup-info {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.Matchups_team-info {
+  text-align: center;
+}
+
+.Matchups_vs {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Week Selector */
+.Matchups_week-selector {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.Matchups_week-dropdown {
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  min-width: 300px;
+  cursor: pointer;
+}
+
+/* Day Tabs */
+.Matchups_day-tabs {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.Matchups_day-tab {
+  padding: 0.5rem 1rem;
+  margin: 0 0.5rem;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.Matchups_day-tab:hover {
+  background: #d0d0d0;
+}
+
+.Matchups_active-tab {
+  background: #0077ff;
+  color: white;
+  font-weight: bold;
+}
+
+/* Courts Layout */
+.Matchups_courts {
+  display: flex;
+  justify-content: space-between; /* Spread out horizontally */
+  align-items: flex-start;
+  margin: 2rem 0;
+  gap: 1rem;
+}
+
+.Matchups_court-section {
+  flex: 0 0 48%; /* Each court ~48% of the container width */
+}
+
+.Matchups_court-section h3 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* Court Container */
+.Matchups_court-container {
+  position: relative;
+  width: 100%;
+  border: 15px solid transparent;
+  border-image: linear-gradient(45deg, #FFA500, #FF0000) 1;
+  border-image-slice: 1;
+}
+
+.Matchups_court-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Team Slots on Court */
+.Matchups_team-slot {
+  position: absolute;
+  width: 90px;
+  height: 70px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, border 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+/* Live player style */
+.Matchups_live-player {
+  background-color: #e0ffe0 !important;
+  border: 1px solid #4CAF50 !important;
+}
+
+/* Inactive player style */
+.Matchups_inactive-player {
+  background-color: #f5f5f5 !important;
+  color: #999 !important;
+}
+
+.Matchups_team-slot:hover {
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+/* Adjust positions to your liking */
+.Matchups_slot-pg {
+  top: 10%;
+  left: 30%;
+}
+
+.Matchups_slot-sg {
+  bottom: 10%;
+  left: 30%;
+}
+
+.Matchups_slot-g {
+  top: 10%;
+  right: 30%;
+}
+
+.Matchups_slot-util1 {
+  bottom: 10%;
+  right: 30%;
+}
+
+.Matchups_slot-sf {
+  top: 0%;
+  left: 5%;
+}
+
+.Matchups_slot-pf {
+  bottom: 0%;
+  left: 5%;
+}
+
+.Matchups_slot-f {
+  top: 0%;
+  right: 5%;
+}
+
+.Matchups_slot-util2 {
+  bottom: 0%;
+  right: 5%;
+}
+
+.Matchups_slot-c1 {
+  top: 40%;
+  left: 5%;
+}
+
+.Matchups_slot-c2 {
+  top: 40%;
+  right: 5%;
+}
+
+.Matchups_slot-label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #333;
+}
+
+.Matchups_slot-player {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* Comparison Table: narrower container, centered below the courts */
+.Matchups_comparison-table {
+  width: 90%; /* table container narrower than full page */
+  margin: 2rem auto;
+  overflow-x: auto; /* Add horizontal scrolling for small screens */
+}
+
+.Matchups_comparison-table h3 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.Matchups_comparison-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.Matchups_comparison-table th,
+.Matchups_comparison-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.Matchups_comparison-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.Matchups_comparison-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.Matchups_comparison-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* Info icon button */
+.Matchups_info-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 2px;
+}
+
+.Matchups_info-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Loading indicator */
+.Matchups_loading {
+  text-align: center;
+  margin: 2rem 0;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* Live indicator animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.Matchups_live-indicator {
+  color: green;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+/* Media queries for responsive design */
+@media screen and (max-width: 1200px) {
+  .Matchups_courts {
+    flex-direction: column;
+  }
+  
+  .Matchups_court-section {
+    flex: 0 0 100%;
+    margin-bottom: 2rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .Matchups_day-tab {
+    padding: 0.4rem 0.8rem;
+    margin: 0 0.3rem;
+    font-size: 0.9rem;
+  }
+  
+  .Matchups_big-score {
+    font-size: 2.5rem;
+  }
+  
+  .Matchups_team-slot {
+    width: 80px;
+    height: 60px;
+    font-size: 0.8rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .Matchups_day-tab {
+    padding: 0.3rem 0.6rem;
+    margin: 0 0.2rem;
+    font-size: 0.8rem;
+  }
+  
+  .Matchups_big-score {
+    font-size: 2rem;
+  }
+}

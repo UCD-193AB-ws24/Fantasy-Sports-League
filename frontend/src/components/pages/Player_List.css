@@ -1,0 +1,101 @@
+/* Updated Player_List.css for a modern, Yahoo-like design */
+
+.PL_container {
+    padding: 30px;
+    background: #f4f6f8;
+    min-height: 100vh;
+  }
+  
+  .PL_header {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+  }
+  
+  .PL_searchBar {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .PL_table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  .PL_table th {
+    background: #007bff;
+    color: #fff;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  .PL_table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+    color: #333;
+  }
+  
+  .PL_table tr:nth-child(even) {
+    background: #f9f9f9;
+  }
+  
+  .PL_table tr:hover {
+    background: #e9f2fb;
+  }
+  
+  .PL_colRank { width: 5%; }
+  .PL_colName { width: 40%; }
+  .PL_colTeam { width: 20%; }
+  .PL_colPosition { width: 20%; }
+  .PL_colInfo { width: 15%; }
+  
+  .PL_infoButton {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+  }
+  
+  .PL_infoButton:hover {
+    background-color: #0056b3;
+  }
+
+.PL_addButton {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.PL_addButton:hover {
+  background-color: #45a049;
+}
+
+.PL_onRoster {
+  color: #777;
+  font-style: italic;
+  padding: 8px 0;
+  display: inline-block;
+}

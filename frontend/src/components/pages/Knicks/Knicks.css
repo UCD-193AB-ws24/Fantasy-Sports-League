@@ -1,0 +1,78 @@
+.knicks-container {
+  background-image: url("knicks.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  height: 100vh;
+}
+
+/*
+color scheme
+cav wine: #860038
+cav gold: #FDBB30
+black: #000000
+*/
+
+.knicks-wrapper{
+width:20%;
+  background: #F58426;
+  padding: 2rem;
+  border-radius: 15px;
+  height:91vh;
+  width:80%;
+  margin-left: -5px;
+  margin-top: -7px;
+}
+.knicks-h1{
+    color: #006BB6;
+  font-size: 1.1rem;
+  font-family: sans-serif;
+}
+.sessions{
+  margin-top: 2rem;
+  border-radius: 12px;
+  position: relative;
+}
+.knicks-times{
+  font-weight: bold;
+  padding-bottom: 1.5rem;
+  border-left: 1px solid #006BB6;
+  position: relative;
+  padding-left: 20px;
+  margin-left: 0px;
+  &:last-child{
+    border: 0px;
+    padding-bottom: 0;
+  }
+  /*
+  kni blue: #006BB6
+  kni orange: #F58426
+  kni silver: #BEC0C2*/
+  &:before{
+    content: '';
+    width: 15px;
+    height: 15px;
+    background: #006BB6;
+    border: 1px solid #4e5ed3;
+    box-shadow: 3px 3px 0px #963821;
+    box-shadow: 3px 3px 0px #BEC0C2;
+    border-radius: 50%;
+    position: absolute;
+    left: -10px;
+    top: 0px;
+  }
+}
+.knicks-time{
+  color: #006BB6;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+
+}
+.knicks-p{
+  color: #BEC0C2;
+  font-family: sans-serif;
+  line-height: 1.5;
+  margin-top:0.4rem;
+}
