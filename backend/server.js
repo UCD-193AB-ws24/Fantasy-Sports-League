@@ -829,6 +829,50 @@ app.get('/api/roster/:userId', authenticate, async (req, res) => {
     }
   });
 
+  app.post('/api/roster/movePlayer', async (req, res) => {
+    try {
+      const { userId, playerId, newPosition } = req.body;
+
+      // Find the roster
+      const roster = await prisma.roster.findFirst({
+        where: { userId: parseInt(userId) },
+        include: { players: true }
+      });
+
+      if (!roster) {
+        return res.status(404).json({ error: "Roster not found" });
+      }
+
+      // Find the player in the roster
+      const rosterPlayer = roster.players.find(rp => rp.playerId === parseInt(playerId) && rp.isBench);
+
+      if (!rosterPlayer) {
+        return res.status(404).json({ error: "Player not found on bench" });
+      }
+
+      // Check if the new position is already occupied
+      const positionOccupied = roster.players.some(rp => rp.position === newPosition && !rp.isBench);
+
+      if (positionOccupied) {
+        return res.status(400).json({ error: "Position already occupied" });
+      }
+
+      // Update the player's position
+      const updatedPlayer = await prisma.rosterPlayer.update({
+        where: { id: rosterPlayer.id },
+        data: {
+          position: newPosition,
+          isBench: false
+        }
+      });
+
+      res.json({ success: true, message: `Player moved to ${newPosition}`, updatedPlayer });
+    } catch (error) {
+      console.error("Error moving player:", error);
+      res.status(500).json({ error: "Failed to move player" });
+    }
+});
+
   app.get('/api/roster/:userId/livePoints', authenticate, async (req, res) => {
     try {
       // Use authenticated user ID if available, fallback to path parameter

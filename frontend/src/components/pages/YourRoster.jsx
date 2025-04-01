@@ -220,33 +220,29 @@ function YourRoster() {
   const determineAllowedPositions = (positions) => {
     const allowedPositions = [];
     
-    if (positions.includes("PG")) {
-      allowedPositions.push("PG", "G", "Util-1", "Util-2");
-    }
-    
-    if (positions.includes("SG")) {
-      allowedPositions.push("SG", "G", "Util-1", "Util-2");
-    }
-    
-    if (positions.includes("SF")) {
-      allowedPositions.push("SF", "F", "Util-1", "Util-2");
-    }
-    
-    if (positions.includes("PF")) {
-      allowedPositions.push("PF", "F", "Util-1", "Util-2");
-    }
-    
-    if (positions.includes("C")) {
-      allowedPositions.push("C-1", "C-2", "Util-1", "Util-2");
-    }
-    
-    if (allowedPositions.length === 0) {
-      allowedPositions.push("Util-1", "Util-2");
-    }
+    const positionMap = {
+      "PG": ["PG", "G"],
+      "SG": ["SG", "G"],
+      "SF": ["SF", "F"],
+      "PF": ["PF", "F"],
+      "C": ["C-1", "C-2"],
+      "Guard": ["PG", "SG", "G"],
+      "Forward": ["SF", "PF", "F"],
+      "Center": ["C-1", "C-2"],
+      "Forward-Guard": ["SF", "PF", "F", "PG", "SG", "G"]
+    };
+
+    positions.forEach(pos => {
+      const allowed = positionMap[pos] || [];
+      allowedPositions.push(...allowed);
+    });
+
+    allowedPositions.push("Util-1", "Util-2");
     
     return allowedPositions;
   };
 
+  
   // Select/deselect a bench player
   const handlePlayerClick = (player) => {
     if (selectedPlayer && selectedPlayer.id === player.id) {
@@ -323,13 +319,20 @@ function YourRoster() {
       }
       
       // Add player to the new position
-      await axios.post('http://localhost:5001/api/roster/add', {
+      // await axios.post('http://localhost:5001/api/roster/add', {
+      //   userId,
+      //   playerId: selectedPlayer.id,
+      //   position: slot.label,
+      //   isBench: false
+      // }, {
+      //   withCredentials: true
+      // });
+
+      await axios.post('http://localhost:5001/api/roster/movePlayer', {
         userId,
         playerId: selectedPlayer.id,
-        position: slot.label,
+        newPosition: slot.label,
         isBench: false
-      }, {
-        withCredentials: true
       });
       
       // Update UI without reloading entire roster
