@@ -216,33 +216,50 @@ function YourRoster() {
     }
   };
 
-  // Helper to determine allowed positions based on player's positions (unchanged)
-  const determineAllowedPositions = (positions) => {
-    const allowedPositions = [];
-    
-    const positionMap = {
-      "PG": ["PG", "G"],
-      "SG": ["SG", "G"],
-      "SF": ["SF", "F"],
-      "PF": ["PF", "F"],
-      "C": ["C-1", "C-2"],
-      "Guard": ["PG", "SG", "G"],
-      "Forward": ["SF", "PF", "F"],
-      "Center": ["C-1", "C-2"],
-      "Forward-Guard": ["SF", "PF", "F", "PG", "SG", "G"]
-    };
-
-    positions.forEach(pos => {
-      const allowed = positionMap[pos] || [];
-      allowedPositions.push(...allowed);
-    });
-
-    allowedPositions.push("Util-1", "Util-2");
-    
-    return allowedPositions;
+  // Helper to determine allowed positions based on player's positions
+  // Helper to determine allowed positions based on player's positions
+const determineAllowedPositions = (positions) => {
+  const allowedPositions = new Set();
+  
+  const positionMap = {
+    "PG": ["PG", "G"],
+    "SG": ["SG", "G"],
+    "SF": ["SF", "F"],
+    "PF": ["PF", "F"],
+    "C": ["C-1", "C-2"],
+    "Guard": ["PG", "SG", "G"],
+    "Forward": ["SF", "PF", "F"],
+    "Center": ["C-1", "C-2"]
   };
 
+  // Process each position, including handling hyphenated positions
+  positions.forEach(pos => {
+    // Check if this is a combined position (contains a hyphen)
+    if (pos.includes('-')) {
+      // Split the combined position
+      const combinedPositions = pos.split('-');
+      
+      // Add allowed positions for each part
+      combinedPositions.forEach(subPos => {
+        if (positionMap[subPos]) {
+          positionMap[subPos].forEach(p => allowedPositions.add(p));
+        }
+      });
+    } 
+    // Handle regular positions
+    else if (positionMap[pos]) {
+      positionMap[pos].forEach(p => allowedPositions.add(p));
+    }
+  });
+
+  // Always add utility positions
+  allowedPositions.add("Util-1");
+  allowedPositions.add("Util-2");
   
+  return Array.from(allowedPositions);
+};
+
+
   // Select/deselect a bench player
   const handlePlayerClick = (player) => {
     if (selectedPlayer && selectedPlayer.id === player.id) {
@@ -367,24 +384,24 @@ function YourRoster() {
     const slot = teamSlots.find((s) => s.id === slotId);
     if (slot && slot.player) {
       try {
-        // Remove from roster
-        await axios.delete('http://localhost:5001/api/roster/remove', {
-          data: { userId, playerId: slot.player.id },
-          withCredentials: true
+        // Move player to bench
+        await axios.post('http://localhost:5001/api/roster/moveToBench', {
+          userId,
+          playerId: slot.player.id
         });
-        
+
         // Add to bench
         const updatedTeamSlots = teamSlots.map((s) =>
           s.id === slotId ? { ...s, player: null } : s
         );
         setTeamSlots(updatedTeamSlots);
         setBench([...bench, slot.player]);
-        
+
         if (selectedPlayer && selectedPlayer.id === slot.player.id) {
           setSelectedPlayer(null);
         }
       } catch (error) {
-        console.error("Error returning player to bench:", error);
+        console.error("Error moving player to bench:", error);
       }
     }
   };

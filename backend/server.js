@@ -777,6 +777,49 @@ app.get('/api/roster/:userId', authenticate, async (req, res) => {
   }
    
 
+  app.post('/api/roster/moveToBench', async (req, res) => {
+    try {
+      const { userId, playerId } = req.body;
+  
+      // Find the roster
+      const roster = await prisma.roster.findFirst({
+        where: { userId: parseInt(userId) },
+        include: { players: true }
+      });
+  
+      if (!roster) {
+        return res.status(404).json({ error: "Roster not found" });
+      }
+  
+      // Find the player in the roster
+      const rosterPlayer = roster.players.find(rp => rp.playerId === parseInt(playerId) && !rp.isBench);
+  
+      if (!rosterPlayer) {
+        return res.status(404).json({ error: "Player not found in starting lineup" });
+      }
+  
+      // Check if the bench is full
+      const benchPlayers = roster.players.filter(p => p.isBench);
+      if (benchPlayers.length >= 5) {
+        return res.status(400).json({ error: "Bench is full" });
+      }
+  
+      // Update the player's position to bench
+      const updatedPlayer = await prisma.rosterPlayer.update({
+        where: { id: rosterPlayer.id },
+        data: {
+          position: "Bench",
+          isBench: true
+        }
+      });
+  
+      res.json({ success: true, message: "Player moved to bench", updatedPlayer });
+    } catch (error) {
+      console.error("Error moving player to bench:", error);
+      res.status(500).json({ error: "Failed to move player to bench" });
+    }
+  });
+
   app.delete('/api/roster/removePlayer', authenticate, async (req, res) => {
     try {
       // Use authenticated user ID if available, fallback to request body
