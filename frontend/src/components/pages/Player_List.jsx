@@ -8,37 +8,37 @@ import axios from 'axios';
 
 const Player_List = () => {
   const [players, setPlayers] = useState([]);
+  const [originalPlayers, setOriginalPlayers] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [roster, setRoster] = useState([]);
-  
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'default' });
+  const [selectedTeam, setSelectedTeam] = useState('');
+  const [selectedPosition, setSelectedPosition] = useState('');
+
   const { user } = useContext(AuthContext);
   const userId = user?.id;
 
   // Normalize string for better search functionality
   const normalizeString = (str) => {
     return str
-      .normalize('NFD')                          // decompose accented letters
-      .replace(/[\u0300-\u036f]/g, "")           // remove diacritics
-      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")  // remove punctuation
-      .replace(/\s+/g, " ")                      // normalize spaces
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
+      .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
   };
 
-  // Utility function to create a safe file name from player name
-  const safeFileName = (name) => {
-    return name.split(' ').join('_');
-  };
+  // Utility function to create a safe filename from player name
+  const safeFileName = (name) => name.split(' ').join('_');
 
   useEffect(() => {
-    // 1) Fetch all league players
+    // Fetch all league players
     fetch('http://localhost:5001/api/leagues/1/players')
       .then(res => res.json())
       .then(async (fetchedPlayers) => {
         console.log('Fetched league players:', fetchedPlayers);
-
-        // 2) For each player, fetch their game logs and compute averages in the front end
         const updatedPlayers = await Promise.all(
           fetchedPlayers.map(async (p) => {
             try {
@@ -65,32 +65,27 @@ const Player_List = () => {
               p.avgStl = gp > 0 ? totalStl / gp : 0;
               p.avgBlk = gp > 0 ? totalBlk / gp : 0;
               p.avgFanPts = gp > 0 ? totalFP / gp : 0;
-
             } catch (err) {
               console.error(`Error fetching logs for ${p.name}:`, err);
-              // If logs can't be fetched, leave them as 0 or undefined
             }
-
             return p;
           })
         );
-
         setPlayers(updatedPlayers);
+        setOriginalPlayers(updatedPlayers);
       })
       .catch(err => console.error(err));
       
     // Fetch the user's roster to know which players are already added
     fetchRoster();
   }, []);
-  
+
   const fetchRoster = async () => {
     try {
       const response = await axios.get(`http://localhost:5001/api/roster/${userId}`, {
         withCredentials: true
       });
       const rosterData = response.data;
-      
-      // Create array of player IDs on roster for easy checking
       const rosterPlayerIds = rosterData.players.map(rp => rp.player.id);
       setRoster(rosterPlayerIds);
     } catch (error) {
@@ -98,18 +93,45 @@ const Player_List = () => {
     }
   };
 
-  // Filter by search term using normalized strings
-  const filteredPlayers = players.filter(player =>
-    normalizeString(player.name).includes(normalizeString(search))
+  // Filter players based on search, team, and position
+  const filteredPlayers = originalPlayers.filter(player =>
+    normalizeString(player.name).includes(normalizeString(search)) &&
+    (selectedTeam === '' || player.team === selectedTeam) &&
+    (selectedPosition === '' || (player.positions && player.positions.includes(selectedPosition)))
   );
+
+  // Sorting functionality using sortConfig
+  const sortedPlayers = React.useMemo(() => {
+    if (!sortConfig.key || sortConfig.direction === 'default') return filteredPlayers;
+    return [...filteredPlayers].sort((a, b) => {
+      const aVal = a[sortConfig.key] ?? 0;
+      const bVal = b[sortConfig.key] ?? 0;
+      if (sortConfig.direction === 'desc') return bVal - aVal;
+      if (sortConfig.direction === 'asc') return aVal - bVal;
+      return 0;
+    });
+  }, [filteredPlayers, sortConfig]);
+
+  const handleSort = (key) => {
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'default') {
+        setSortConfig({ key, direction: 'desc' });
+      } else if (sortConfig.direction === 'desc') {
+        setSortConfig({ key, direction: 'asc' });
+      } else if (sortConfig.direction === 'asc') {
+        setSortConfig({ key: null, direction: 'default' });
+      }
+    } else {
+      setSortConfig({ key, direction: 'desc' });
+    }
+  };
 
   const handleInfoClick = (player) => {
     setSelectedPlayer(player);
   };
   
   const handleAddToRoster = async (player, event) => {
-    event.stopPropagation(); // Prevent triggering other click handlers
-    
+    event.stopPropagation();
     try {
       const response = await axios.post('http://localhost:5001/api/roster/add', {
         userId,
@@ -117,72 +139,99 @@ const Player_List = () => {
       }, {
         withCredentials: true
       });
-      
-      // Update local roster state to reflect the change
       setRoster([...roster, player.id]);
-      
-      // Show success message with position assignment
       alert(response.data.message);
-      
-      // Optional: Refresh the page to show updated roster
-      // If you uncomment this, also add a confirmation dialog
-      // if (confirm("Player added successfully! View your roster now?")) {
-      //   window.location.href = '/YourRoster';
-      // }
     } catch (error) {
       console.error("Error adding player to roster:", error);
       alert(error.response?.data?.error || "Error adding player to roster");
     }
   };
   
-  const isPlayerOnRoster = (playerId) => {
-    return roster.includes(playerId);
-  };
+  const isPlayerOnRoster = (playerId) => roster.includes(playerId);
+
+  // Compute unique teams and positions for the dropdown filters
+  const teams = Array.from(new Set(originalPlayers.map(player => player.team).filter(Boolean)));
+  const positions = Array.from(new Set(originalPlayers.flatMap(player => player.positions || [])));
 
   return (
     <>
       <MenuBar />
       <div className="PL_container">
         <h1 className="PL_header">NBA Player List</h1>
-        <input
-          type="text"
-          className="PL_searchBar"
-          placeholder="Search players..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+
+        {/* Unified Filters & Search */}
+        <div className="PL_filtersContainer">
+          <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)}>
+            <option value="">All Teams</option>
+            {teams.map(team => (
+              <option key={team} value={team}>{team}</option>
+            ))}
+          </select>
+          <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)}>
+            <option value="">All Positions</option>
+            {positions.map(position => (
+              <option key={position} value={position}>{position}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="Search players..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
         <table className="PL_table">
           <thead>
             <tr>
-              <th>Rank</th>
+              <th onClick={() => handleSort('rank')}>
+                Rank {sortConfig.key === 'rank' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              {/* Blank header for photo column */}
+              <th className="PL_colPhoto"></th>
               <th>Name</th>
               <th>Team</th>
               <th>Position</th>
               <th>Jersey</th>
-              <th>Avg. Fan Pts</th>
-              <th>GP</th>
-              <th>PTS</th>
-              <th>REB</th>
-              <th>AST</th>
-              <th>STL</th>
-              <th>BLK</th>
+              <th onClick={() => handleSort('avgFanPts')}>
+                Avg. Fan Pts {sortConfig.key === 'avgFanPts' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('gamesPlayed')}>
+                GP {sortConfig.key === 'gamesPlayed' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgPts')}>
+                PTS {sortConfig.key === 'avgPts' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgReb')}>
+                REB {sortConfig.key === 'avgReb' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgAst')}>
+                AST {sortConfig.key === 'avgAst' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgStl')}>
+                STL {sortConfig.key === 'avgStl' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgBlk')}>
+                BLK {sortConfig.key === 'avgBlk' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
               <th>Info</th>
               <th>Roster</th>
             </tr>
           </thead>
           <tbody>
-            {filteredPlayers.map((player) => (
+            {sortedPlayers.map((player) => (
               <tr key={player.id}>
                 <td>{player.rank ?? '-'}</td>
-                <td>
+                {/* Photo column with headshot */}
+                <td className="PL_colPhoto">
                   <img 
                     src={`/headshots/${safeFileName(player.name)}_headshot.jpg`} 
                     onError={(e) => { e.target.onerror = null; e.target.src = '/headshots/default.jpg'; }}
-                    style={{ width: "50px", height: "auto", marginRight: "8px", verticalAlign: "middle" }}
+                    style={{ width: "60px", height: "auto", display: "block", margin: "0 auto" }}
                     alt={player.name}
                   />
-                  {player.name}
                 </td>
+                <td>{player.name}</td>
                 <td>{player.team || '-'}</td>
                 <td>
                   {player.positions && player.positions.length > 0

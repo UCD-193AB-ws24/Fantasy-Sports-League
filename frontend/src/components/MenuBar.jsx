@@ -14,11 +14,7 @@ const MenuBar = () => {
   };
 
   const menuItems = [
-    {
-      id: 1,
-      label: 'Home',
-      path: '/' 
-    },
+    { id: 1, label: 'Home', path: '/' },
     {
       id: 2,
       label: 'Leagues',
@@ -36,21 +32,9 @@ const MenuBar = () => {
         { text: 'International', type: 'internal', path: '/InternationalRankings' },
       ],
     },
-    {
-      id: 4,
-      label: 'Your Roster',
-      path: '/YourRoster' 
-    },
-    {
-      id: 5,
-      label: 'Matchups',
-      path: '/Matchups' 
-    },
-    {
-      id: 6,
-      label: 'Player List',
-      path: '/PlayerList' 
-    },
+    { id: 4, label: 'Your Roster', path: '/YourRoster' },
+    { id: 5, label: 'Matchups', path: '/Matchups' },
+    { id: 6, label: 'Player List', path: '/PlayerList' },
     {
       id: 7,
       label: 'Live Games',
@@ -62,7 +46,7 @@ const MenuBar = () => {
     },
   ];
 
-  // User menu items only shown when logged in
+  // User menu items shown when logged in
   const userMenuItems = [
     {
       id: 8,
@@ -75,18 +59,10 @@ const MenuBar = () => {
     }
   ];
 
-  // Non-logged in user menu items
+  // Non-logged in menu items
   const nonUserMenuItems = [
-    {
-      id: 8,
-      label: 'Login',
-      path: '/login'
-    },
-    {
-      id: 9,
-      label: 'Register',
-      path: '/register'
-    }
+    { id: 8, label: 'Login', path: '/login' },
+    { id: 9, label: 'Register', path: '/register' }
   ];
 
   // Combine base menu with user-specific items
@@ -101,17 +77,14 @@ const MenuBar = () => {
         <div
           key={item.id}
           className="menu-item-container"
-          onMouseEnter={() => item.options && setActiveDropdown(item.id)} 
+          onMouseEnter={() => item.options && setActiveDropdown(item.id)}
           onMouseLeave={() => setActiveDropdown(null)}
         >
           <div
             className="menu-item"
             onClick={() => {
-              if (item.path) {
-                navigate(item.path);
-              }
+              if (item.path) navigate(item.path);
             }}
-            style={{ cursor: 'pointer' }}
           >
             {item.label}
           </div>
@@ -120,7 +93,6 @@ const MenuBar = () => {
               {item.options.map((option, index) => {
                 if (option.type === 'external') {
                   return (
-                    
                     <a
                       key={index}
                       href={option.link}
