@@ -33,6 +33,8 @@ function YourRoster() {
   const [livePoints, setLivePoints] = useState({});
   const { user } = useContext(AuthContext);
   const [teamName, setTeamName] = useState("Your Roster");
+  const [selectedSlot, setSelectedSlot] = useState(null);
+
   
   const userId = user?.id;
 
@@ -252,144 +254,231 @@ function YourRoster() {
     }
   };
 
+
   // Style highlight if this is the selected player
   const getGradientBorderStyle = (player) => {
-    if (!player || !selectedPlayer || player.id !== selectedPlayer.id) {
+    const isSelected = selectedPlayer && player && selectedPlayer.id === player.id;
+    
+    if (!isSelected) {
       return {};
     }
+    
     const [color1, color2] = player.teamColors || ["#add8e6", "#87ceeb"];
     return {
-      border: "4px solid transparent",
-      borderImage: `linear-gradient(45deg, ${color1}, ${color2}) 1`,
-      borderImageSlice: 1,
+      border: "3px solid #0077ff",
+      boxShadow: "0 0 10px rgba(0, 119, 255, 0.5)"
     };
   };
 
   const handleSlotClick = async (slotId) => {
     const slot = teamSlots.find((s) => s.id === slotId);
     
-    // If clicked on a slot that has the currently selected player, remove them
-    if (slot.player && selectedPlayer && slot.player.id === selectedPlayer.id) {
-      try {
-        await axios.delete('http://localhost:5001/api/roster/remove', {
-          data: { userId, playerId: slot.player.id },
-          withCredentials: true
-        });
-        
-        const updatedTeamSlots = teamSlots.map((s) =>
-          s.id === slotId ? { ...s, player: null } : s
-        );
-        setTeamSlots(updatedTeamSlots);
-        setBench([...bench, selectedPlayer]);
-        setSelectedPlayer(null);
-      } catch (error) {
-        console.error("Error removing player from slot:", error);
-      }
+    // If no player is selected and we clicked an empty slot, do nothing
+    if (!selectedPlayer && !slot.player) return;
+    
+    // If no player is selected but we clicked on a filled slot, select that player
+    if (!selectedPlayer && slot.player) {
+      setSelectedPlayer(slot.player);
       return;
     }
     
-    if (!selectedPlayer) return;
+    // If a player is selected and we clicked on the same player, deselect it
+    if (selectedPlayer && slot.player && selectedPlayer.id === slot.player.id) {
+      setSelectedPlayer(null);
+      return;
+    }
     
-    // Validate the position
+    // Validate position compatibility
     if (!selectedPlayer.allowedPositions.includes(slot.label)) {
-      alert(`${selectedPlayer.name} cannot be placed in the ${slot.label} slot.`);
+      alert(`${selectedPlayer.name} cannot play in the ${slot.label} position.`);
       return;
     }
     
     try {
-      // First, check if the player is already in another position
-      const existingSlot = teamSlots.find(s => 
-        s.player && s.player.id === selectedPlayer.id
-      );
+      // Check if selected player is from bench
+      const isSelectedFromBench = !teamSlots.some(s => s.player && s.player.id === selectedPlayer.id);
       
-      if (existingSlot) {
-        // Remove player from current position before adding to new one
-        await axios.delete('http://localhost:5001/api/roster/remove', {
-          data: { userId, playerId: selectedPlayer.id },
+      // Case 1: Bench player to empty slot
+      if (isSelectedFromBench && !slot.player) {
+        await axios.post('http://localhost:5001/api/roster/add', {
+          userId,
+          playerId: selectedPlayer.id,
+          position: slot.label,
+          isBench: false
+        }, {
           withCredentials: true
         });
+        
+        // Remove from bench in UI
+        setBench(prevBench => prevBench.filter(p => p.id !== selectedPlayer.id));
+        
+        // Add to court in UI
+        setTeamSlots(prevSlots => prevSlots.map(s => 
+          s.id === slotId ? { ...s, player: selectedPlayer } : s
+        ));
       }
       
-      // Handle the player currently in the target slot
-      if (slot.player) {
-        await axios.delete('http://localhost:5001/api/roster/remove', {
-          data: { userId, playerId: slot.player.id },
+      // Case 2: Bench player to filled slot (swap)
+      else if (isSelectedFromBench && slot.player) {
+        // First move the court player to bench
+        await axios.delete('http://localhost:5001/api/roster/removePlayer', {
+          data: { 
+            userId, 
+            playerId: slot.player.id 
+          },
           withCredentials: true
         });
+        
+        // Then add the bench player to court
+        await axios.post('http://localhost:5001/api/roster/add', {
+          userId,
+          playerId: selectedPlayer.id,
+          position: slot.label,
+          isBench: false
+        }, {
+          withCredentials: true
+        });
+        
+        // Update UI
+        setBench(prevBench => [
+          ...prevBench.filter(p => p.id !== selectedPlayer.id),
+          slot.player
+        ]);
+        
+        setTeamSlots(prevSlots => prevSlots.map(s => 
+          s.id === slotId ? { ...s, player: selectedPlayer } : s
+        ));
       }
       
-      // Add player to the new position
-      // await axios.post('http://localhost:5001/api/roster/add', {
-      //   userId,
-      //   playerId: selectedPlayer.id,
-      //   position: slot.label,
-      //   isBench: false
-      // }, {
-      //   withCredentials: true
-      // });
-
-      await axios.post('http://localhost:5001/api/roster/movePlayer', {
-        userId,
-        playerId: selectedPlayer.id,
-        newPosition: slot.label,
-        isBench: false
-      });
-      
-      // Update UI without reloading entire roster
-      let updatedBench = bench.filter((p) => p.id !== selectedPlayer.id);
-      if (slot.player) {
-        updatedBench.push(slot.player);
+      // Case 3: Court player to empty slot
+      else if (!isSelectedFromBench && !slot.player) {
+        const currentSlot = teamSlots.find(s => s.player && s.player.id === selectedPlayer.id);
+        
+        // Remove from current position first
+        await axios.delete('http://localhost:5001/api/roster/removePlayer', {
+          data: { 
+            userId, 
+            playerId: selectedPlayer.id 
+          },
+          withCredentials: true
+        });
+        
+        // Then add to new position
+        await axios.post('http://localhost:5001/api/roster/add', {
+          userId,
+          playerId: selectedPlayer.id,
+          position: slot.label,
+          isBench: false
+        }, {
+          withCredentials: true
+        });
+        
+        // Update UI
+        setTeamSlots(prevSlots => prevSlots.map(s => {
+          if (s.id === slotId) return { ...s, player: selectedPlayer };
+          if (s.id === currentSlot.id) return { ...s, player: null };
+          return s;
+        }));
       }
       
-      const updatedTeamSlots = teamSlots.map((s) => {
-        // Remove player from any existing slot
-        if (s.player && s.player.id === selectedPlayer.id) {
-          return { ...s, player: null };
+      // Case 4: Court player to filled slot (swap)
+      else if (!isSelectedFromBench && slot.player) {
+        const currentSlot = teamSlots.find(s => s.player && s.player.id === selectedPlayer.id);
+        
+        // Validate position compatibility for second player
+        if (!slot.player.allowedPositions.includes(currentSlot.label)) {
+          alert(`${slot.player.name} cannot play in the ${currentSlot.label} position.`);
+          return;
         }
-        // Add to target slot
-        if (s.id === slotId) {
-          return { ...s, player: selectedPlayer };
-        }
-        return s;
-      });
+        
+        // Remove both players
+        await axios.delete('http://localhost:5001/api/roster/removePlayer', {
+          data: { 
+            userId, 
+            playerId: selectedPlayer.id 
+          },
+          withCredentials: true
+        });
+        
+        await axios.delete('http://localhost:5001/api/roster/removePlayer', {
+          data: { 
+            userId, 
+            playerId: slot.player.id 
+          },
+          withCredentials: true
+        });
+        
+        // Add both players to new positions
+        await axios.post('http://localhost:5001/api/roster/add', {
+          userId,
+          playerId: selectedPlayer.id,
+          position: slot.label,
+          isBench: false
+        }, {
+          withCredentials: true
+        });
+        
+        await axios.post('http://localhost:5001/api/roster/add', {
+          userId,
+          playerId: slot.player.id,
+          position: currentSlot.label,
+          isBench: false
+        }, {
+          withCredentials: true
+        });
+        
+        // Update UI
+        setTeamSlots(prevSlots => prevSlots.map(s => {
+          if (s.id === slotId) return { ...s, player: selectedPlayer };
+          if (s.id === currentSlot.id) return { ...s, player: slot.player };
+          return s;
+        }));
+      }
       
-      setTeamSlots(updatedTeamSlots);
-      setBench(updatedBench);
+      // Reset selection
       setSelectedPlayer(null);
+      
     } catch (error) {
-      console.error("Error adding player to slot:", error);
-      alert(error.response?.data?.error || "Error updating roster");
+      console.error("Error updating player positions:", error);
+      loadRoster(); // Reload roster on error
+      alert("Error updating roster: " + (error.response?.data?.error || error.message));
     }
   };
-
-  // Return player from slot to bench
-  const handleReturnToBench = async (slotId) => {
-    const slot = teamSlots.find((s) => s.id === slotId);
-    if (slot && slot.player) {
-      try {
-        // Remove from roster
-        await axios.delete('http://localhost:5001/api/roster/remove', {
-          data: { userId, playerId: slot.player.id },
-          withCredentials: true
-        });
-        
-        // Add to bench
-        const updatedTeamSlots = teamSlots.map((s) =>
-          s.id === slotId ? { ...s, player: null } : s
-        );
-        setTeamSlots(updatedTeamSlots);
-        setBench([...bench, slot.player]);
-        
-        if (selectedPlayer && selectedPlayer.id === slot.player.id) {
-          setSelectedPlayer(null);
-        }
-      } catch (error) {
-        console.error("Error returning player to bench:", error);
-      }
+  
+// Update the handleReturnToBench function to work properly with the API
+const handleReturnToBench = async (slotId) => {
+  const slot = teamSlots.find(s => s.id === slotId);
+  if (!slot || !slot.player) return;
+  
+  try {
+    // Update player to bench status
+    await axios.post('http://localhost:5001/api/roster/add', {
+      userId,
+      playerId: slot.player.id,
+      isBench: true
+    }, {
+      withCredentials: true
+    });
+    
+    // Update UI
+    const updatedTeamSlots = teamSlots.map(s =>
+      s.id === slotId ? { ...s, player: null } : s
+    );
+    
+    setTeamSlots(updatedTeamSlots);
+    setBench(prev => [...prev, slot.player]);
+    
+    if (selectedPlayer && selectedPlayer.id === slot.player.id) {
+      setSelectedPlayer(null);
     }
-  };
+  } catch (error) {
+    console.error("Error returning player to bench:", error);
+    loadRoster(); // Reload roster on error
+    alert("Error moving player to bench: " + (error.response?.data?.error || error.message));
+  }
+};
 
-  const openPlayerModal = (player) => {
+ const openPlayerModal = (player) => {
     setModalPlayer(player);
   };
 

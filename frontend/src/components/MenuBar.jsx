@@ -19,8 +19,8 @@ const MenuBar = () => {
       id: 2,
       label: 'Leagues',
       options: [
-        { text: 'Public' },
-        { text: 'Private' },
+        { text: 'View Leagues', type: 'internal', path: '/leagues' },
+        { text: 'Create League', type: 'internal', path: '/leagues/create' },
       ],
     },
     {

@@ -85,7 +85,7 @@ const MainScreen = () => {
         </div>
 
 
-        {(!user || backgrounds[index].showSignIn) ? (
+        {!user && (
         <div className="login-container">
           <button 
             className="login-button" 
@@ -94,7 +94,7 @@ const MainScreen = () => {
             Login
           </button>
         </div>
-      ) : null}
+      )}
 
         <div className="main-Info">
           <p className="latest-News">Latest Games</p>

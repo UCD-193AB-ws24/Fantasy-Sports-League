@@ -319,7 +319,16 @@ useEffect(() => {
                   <p><strong>True Shooting %:</strong> {player.advancedStats?.trueShooting || "?"}</p>
                   <p><strong>Win Shares:</strong> {player.advancedStats?.winShares || "?"}</p>
                   <p><strong>Box Plus-Minus:</strong> {player.advancedStats?.boxPlusMinus || "?"}</p>
-                  <p><strong>VORP:</strong> {player.advancedStats?.vorp || "?"}</p>
+                  <p><strong>VORP:</strong> {player.advancedStats?.vorp || "?"}</p>         
+                  {/* Add the drop button only when viewing from roster */}
+                  {isRoster && (
+                    <button 
+                      className="PS_drop-button" 
+                      onClick={handleDropPlayer}
+                    >
+                      Drop Player
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
