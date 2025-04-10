@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import MenuBar from '../MenuBar';
 import { motion } from 'framer-motion';
 import PlayerStatsModal from './PlayerStats';
@@ -6,6 +6,8 @@ import './YourRoster.css';
 import { useContext } from 'react';
 import { AuthContext } from "../../AuthContext";
 import axios from 'axios';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 // Define roster position slots (unchanged)
 const initialTeamSlots = [
@@ -24,6 +26,64 @@ const initialTeamSlots = [
   { id: 13, label: "IL-3",   player: null },
 ];
 
+const ItemTypes = {
+  PLAYER: 'player'
+};
+
+// Allows for players to be draggable
+function DraggablePlayer({ player }) {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ItemTypes.PLAYER,
+    item: { player },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }), [player]);
+
+  return (
+    <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+      <img
+        src={`/headshots/${player.name.split(' ').join('_')}_headshot.jpg`}
+        onError={(e) => {
+          e.target.onerror = null; 
+          e.target.src = '/headshots/default.jpg';
+        }}
+        alt={player.name}
+        className="YR_player-portrait"
+      />
+      <div className="YR_player-card-content">
+        <div className="YR_player-name">{player.name}</div>
+        <div className="YR_player-positions">{player.position}</div>
+      </div>
+    </div>
+  );
+}
+
+
+// Second functionality of drag feature, allows players to be droppable into
+function DroppableSlot({ slot, onDropPlayer, children }) {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: ItemTypes.PLAYER,
+    drop: (item) => onDropPlayer(item.player, slot),
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
+  }), [slot, onDropPlayer]);
+
+  return (
+    <div
+      ref={drop}
+      className={`YR_team-slot slot-${slot.label.toLowerCase()}`}
+      style={{ backgroundColor: isOver ? '#e0f7fa' : undefined }}
+    >
+      <div className="YR_slot-label">{slot.label}</div>
+      <div className="YR_slot-player">
+        {children || "Empty"}
+      </div>
+    </div>
+  );
+}
+
 function YourRoster() {
   const [bench, setBench] = useState([]);
   const [teamSlots, setTeamSlots] = useState(initialTeamSlots);
@@ -33,9 +93,7 @@ function YourRoster() {
   const [livePoints, setLivePoints] = useState({});
   const { user } = useContext(AuthContext);
   const [teamName, setTeamName] = useState("Your Roster");
-  const [selectedSlot, setSelectedSlot] = useState(null);
 
-  
   const userId = user?.id;
 
   // Utility function to create a safe file name from player name
@@ -107,27 +165,36 @@ function YourRoster() {
         return { ...slot, player: null };
       }
       return slot;
-    });
-    
-    setTeamSlots(updatedTeamSlots);
-    
-    // Filter out the dropped player from bench
-    const updatedBench = bench.filter(player => player.id !== playerId);
-    setBench(updatedBench);
-    
-    if (selectedPlayer && selectedPlayer.id === playerId) {
-      setSelectedPlayer(null);
     }
-    
-    loadRoster();
+  )}
+
+
+  const determineAllowedPositions = (positions) => {
+    const allowedPositions = [];
+    const positionMap = {
+      "PG": ["PG", "G"],
+      "SG": ["SG", "G"],
+      "SF": ["SF", "F"],
+      "PF": ["PF", "F"],
+      "C": ["C-1", "C-2"],
+      "Guard": ["PG", "SG", "G"],
+      "Forward": ["SF", "PF", "F"],
+      "Center": ["C-1", "C-2"],
+      "Forward-Guard": ["SF", "PF", "F", "PG", "SG", "G"]
+    };
+
+    positions.forEach(pos => {
+      const allowed = positionMap[pos] || [];
+      allowedPositions.push(...allowed);
+    });
+    allowedPositions.push("Util-1", "Util-2");
+    return allowedPositions;
   };
 
   const loadRoster = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5001/api/roster/${userId}`, {
-        withCredentials: true
-      });
+      const response = await axios.get(`http://localhost:5001/api/roster/${userId}`, { withCredentials: true });
       const rosterData = response.data;
       
       // Reset all slots
@@ -218,156 +285,100 @@ function YourRoster() {
     }
   };
 
-  // Helper to determine allowed positions based on player's positions (unchanged)
-  const determineAllowedPositions = (positions) => {
-    const allowedPositions = [];
-    
-    const positionMap = {
-      "PG": ["PG", "G"],
-      "SG": ["SG", "G"],
-      "SF": ["SF", "F"],
-      "PF": ["PF", "F"],
-      "C": ["C-1", "C-2"],
-      "Guard": ["PG", "SG", "G"],
-      "Forward": ["SF", "PF", "F"],
-      "Center": ["C-1", "C-2"],
-      "Forward-Guard": ["SF", "PF", "F", "PG", "SG", "G"]
+  useEffect(() => {
+    const fetchLiveUpdates = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5001/api/roster/${userId}/livePoints`, { withCredentials: true });
+        const updates = response.data.liveUpdates;
+        const pointsMap = {};
+        updates.forEach(update => {
+          pointsMap[update.playerId] = { liveFanPts: update.liveFanPts, isLive: update.isLive };
+        });
+        setLivePoints(pointsMap);
+      } catch (error) {
+        console.error("Error fetching live updates:", error);
+      }
     };
+    fetchLiveUpdates();
+    const interval = setInterval(fetchLiveUpdates, 30000);
+    return () => clearInterval(interval);
+  }, [userId]);
 
-    positions.forEach(pos => {
-      const allowed = positionMap[pos] || [];
-      allowedPositions.push(...allowed);
-    });
-
-    allowedPositions.push("Util-1", "Util-2");
-    
-    return allowedPositions;
-  };
-
-  
-  // Select/deselect a bench player
-  const handlePlayerClick = (player) => {
-    if (selectedPlayer && selectedPlayer.id === player.id) {
-      setSelectedPlayer(null);
-    } else {
-      setSelectedPlayer(player);
+  useEffect(() => {
+    if (user) {
+      const fetchTeamName = async () => {
+        try {
+          const response = await axios.get(`http://localhost:5001/api/user/teamName`, { withCredentials: true });
+          if (response.data.teamName) {
+            setTeamName(response.data.teamName);
+          }
+        } catch (error) {
+          console.error("Error fetching team name:", error);
+        }
+      };
+      fetchTeamName();
     }
-  };
+  }, [user]);
 
-
-  // Style highlight if this is the selected player
-  const getGradientBorderStyle = (player) => {
-    const isSelected = selectedPlayer && player && selectedPlayer.id === player.id;
-    
-    if (!isSelected) {
-      return {};
-    }
-    
-    const [color1, color2] = player.teamColors || ["#add8e6", "#87ceeb"];
-    return {
-      border: "3px solid #0077ff",
-      boxShadow: "0 0 10px rgba(0, 119, 255, 0.5)"
-    };
-  };
-
-  const handleSlotClick = async (slotId) => {
-    const slot = teamSlots.find((s) => s.id === slotId);
-    
-    // If no player is selected and we clicked an empty slot, do nothing
-    if (!selectedPlayer && !slot.player) return;
-    
-    // If no player is selected but we clicked on a filled slot, select that player
-    if (!selectedPlayer && slot.player) {
-      setSelectedPlayer(slot.player);
-      return;
-    }
-    
-    // If a player is selected and we clicked on the same player, deselect it
-    if (selectedPlayer && slot.player && selectedPlayer.id === slot.player.id) {
-      setSelectedPlayer(null);
-      return;
-    }
-    
-    // Validate position compatibility
-    if (!selectedPlayer.allowedPositions.includes(slot.label)) {
-      alert(`${selectedPlayer.name} cannot play in the ${slot.label} position.`);
+  const handleDropPlayer = async (draggedPlayer, targetSlot) => {
+    if (!draggedPlayer.allowedPositions.includes(targetSlot.label)) {
+      alert(`${draggedPlayer.name} cannot play in the ${targetSlot.label} position.`);
       return;
     }
     
     try {
-      // Check if selected player is from bench
-      const isSelectedFromBench = !teamSlots.some(s => s.player && s.player.id === selectedPlayer.id);
+      const isFromBench = bench.some(p => p.id === draggedPlayer.id);
+      const targetSlotHasPlayer = !!targetSlot.player;
       
-      // Case 1: Bench player to empty slot
-      if (isSelectedFromBench && !slot.player) {
+      if (isFromBench && !targetSlotHasPlayer) {
         await axios.post('http://localhost:5001/api/roster/add', {
           userId,
-          playerId: selectedPlayer.id,
-          position: slot.label,
+          playerId: draggedPlayer.id,
+          position: targetSlot.label,
           isBench: false
         }, {
           withCredentials: true
         });
         
-        // Remove from bench in UI
-        setBench(prevBench => prevBench.filter(p => p.id !== selectedPlayer.id));
-        
-        // Add to court in UI
+        setBench(prev => prev.filter(p => p.id !== draggedPlayer.id));
         setTeamSlots(prevSlots => prevSlots.map(s => 
-          s.id === slotId ? { ...s, player: selectedPlayer } : s
+          s.id === targetSlot.id ? { ...s, player: draggedPlayer } : s
         ));
       }
-      
-      // Case 2: Bench player to filled slot (swap)
-      else if (isSelectedFromBench && slot.player) {
-        // First move the court player to bench
+      else if (isFromBench && targetSlotHasPlayer) {
         await axios.delete('http://localhost:5001/api/roster/removePlayer', {
-          data: { 
-            userId, 
-            playerId: slot.player.id 
-          },
+          data: { userId, playerId: targetSlot.player.id },
           withCredentials: true
         });
         
         // Then add the bench player to court
         await axios.post('http://localhost:5001/api/roster/add', {
           userId,
-          playerId: selectedPlayer.id,
-          position: slot.label,
+          playerId: draggedPlayer.id,
+          position: targetSlot.label,
           isBench: false
-        }, {
-          withCredentials: true
-        });
+        }, { withCredentials: true });
         
-        // Update UI
-        setBench(prevBench => [
-          ...prevBench.filter(p => p.id !== selectedPlayer.id),
-          slot.player
+        setBench(prev => [
+          ...prev.filter(p => p.id !== draggedPlayer.id),
+          targetSlot.player
         ]);
-        
         setTeamSlots(prevSlots => prevSlots.map(s => 
-          s.id === slotId ? { ...s, player: selectedPlayer } : s
+          s.id === targetSlot.id ? { ...s, player: draggedPlayer } : s
         ));
       }
-      
-      // Case 3: Court player to empty slot
-      else if (!isSelectedFromBench && !slot.player) {
-        const currentSlot = teamSlots.find(s => s.player && s.player.id === selectedPlayer.id);
-        
-        // Remove from current position first
+      else if (!isFromBench && !targetSlotHasPlayer) {
+        const currentSlot = teamSlots.find(s => s.player && s.player.id === draggedPlayer.id);
         await axios.delete('http://localhost:5001/api/roster/removePlayer', {
-          data: { 
-            userId, 
-            playerId: selectedPlayer.id 
-          },
+          data: { userId, playerId: draggedPlayer.id },
           withCredentials: true
         });
         
         // Then add to new position
         await axios.post('http://localhost:5001/api/roster/add', {
           userId,
-          playerId: selectedPlayer.id,
-          position: slot.label,
+          playerId: draggedPlayer.id,
+          position: targetSlot.label,
           isBench: false
         }, {
           withCredentials: true
@@ -375,44 +386,33 @@ function YourRoster() {
         
         // Update UI
         setTeamSlots(prevSlots => prevSlots.map(s => {
-          if (s.id === slotId) return { ...s, player: selectedPlayer };
+          if (s.id === targetSlot.id) return { ...s, player: draggedPlayer };
           if (s.id === currentSlot.id) return { ...s, player: null };
           return s;
         }));
       }
-      
-      // Case 4: Court player to filled slot (swap)
-      else if (!isSelectedFromBench && slot.player) {
-        const currentSlot = teamSlots.find(s => s.player && s.player.id === selectedPlayer.id);
-        
-        // Validate position compatibility for second player
-        if (!slot.player.allowedPositions.includes(currentSlot.label)) {
-          alert(`${slot.player.name} cannot play in the ${currentSlot.label} position.`);
+      else if (!isFromBench && targetSlotHasPlayer) {
+        const currentSlot = teamSlots.find(s => s.player && s.player.id === draggedPlayer.id);
+        if (!targetSlot.player.allowedPositions.includes(currentSlot.label)) {
+          alert(`${targetSlot.player.name} cannot play in the ${currentSlot.label} position.`);
           return;
         }
         
         // Remove both players
         await axios.delete('http://localhost:5001/api/roster/removePlayer', {
-          data: { 
-            userId, 
-            playerId: selectedPlayer.id 
-          },
+          data: { userId, playerId: draggedPlayer.id },
           withCredentials: true
         });
-        
         await axios.delete('http://localhost:5001/api/roster/removePlayer', {
-          data: { 
-            userId, 
-            playerId: slot.player.id 
-          },
+          data: { userId, playerId: targetSlot.player.id },
           withCredentials: true
         });
         
         // Add both players to new positions
         await axios.post('http://localhost:5001/api/roster/add', {
           userId,
-          playerId: selectedPlayer.id,
-          position: slot.label,
+          playerId: draggedPlayer.id,
+          position: targetSlot.label,
           isBench: false
         }, {
           withCredentials: true
@@ -420,7 +420,7 @@ function YourRoster() {
         
         await axios.post('http://localhost:5001/api/roster/add', {
           userId,
-          playerId: slot.player.id,
+          playerId: targetSlot.player.id,
           position: currentSlot.label,
           isBench: false
         }, {
@@ -429,15 +429,11 @@ function YourRoster() {
         
         // Update UI
         setTeamSlots(prevSlots => prevSlots.map(s => {
-          if (s.id === slotId) return { ...s, player: selectedPlayer };
-          if (s.id === currentSlot.id) return { ...s, player: slot.player };
+          if (s.id === targetSlot.id) return { ...s, player: draggedPlayer };
+          if (s.id === currentSlot.id) return { ...s, player: targetSlot.player };
           return s;
         }));
       }
-      
-      // Reset selection
-      setSelectedPlayer(null);
-      
     } catch (error) {
       console.error("Error updating player positions:", error);
       loadRoster(); // Reload roster on error
@@ -493,60 +489,34 @@ const handleReturnToBench = async (slotId) => {
     // Otherwise use the average from database
     return player.avgFanPts ? player.avgFanPts.toFixed(1) : "0.0";
   };
-
+  
+  useEffect(() => { loadRoster(); }, []);
   if (loading) {
     return <div>Loading roster...</div>;
   }
 
   return (
-    <div>
-      <MenuBar />
-      <h1 className="YR_title">{teamName}</h1>
-
-      {/* Court Layout */}
-      <div className="YR_court-wrapper">
-        <div className="YR_court-container">
-          <img
-            src="/BasketballCourt.png"
-            alt="Basketball Court"
-            className="YR_court-image"
-          />
-          {teamSlots.map((slot) => {
-            const slotStyle = getGradientBorderStyle(slot.player);
-            return (
-              <motion.div
-                key={slot.id}
-                className={`YR_team-slot slot-${slot.label.toLowerCase()}`}
-                style={slotStyle}
-                onClick={() => handleSlotClick(slot.id)}
-                whileHover={{ scale: 1.02 }}
-              >
-                <div className="YR_slot-label">{slot.label}</div>
-                <div className="YR_slot-player">
-                  {slot.player ? (
-                    <div className="YR_slot-content">
-                      <img
-                        src={`/headshots/${safeFileName(slot.player.name)}_headshot.jpg`}
-                        onError={(e) => { e.target.onerror = null; e.target.src = '/headshots/default.jpg'; }}
-                        alt={slot.player.name}
-                        className="YR_court-slot-portrait"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="YR_slot-player-name">{slot.player.name}</div>
+    <DndProvider backend={HTML5Backend}>
+      <div>
+        <MenuBar />
+        <h1 className="YR_title">{teamName}</h1>
+        
+        {/* Court Layout */}
+        <div className="YR_court-wrapper">
+          <div className="YR_court-container">
+            <img src="/BasketballCourt.png" alt="Basketball Court" className="YR_court-image" />
+            {teamSlots.map(slot => (
+              <motion.div key={slot.id}>
+                <DroppableSlot slot={slot} onDropPlayer={handleDropPlayer}>
+                  {slot.player && (
+                    <>
+                      <DraggablePlayer player={slot.player} />
                       <div className="YR_fantasy-points">
                         <strong>Fantasy Points:</strong>{" "}
                         {getFantasyPoints(slot.player)}
                         {livePoints[slot.player?.id]?.isLive && <span className="YR_live-indicator"> LIVE</span>}
-                      </div>
-                      <button
-                        className="YR_return-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleReturnToBench(slot.id);
-                        }}
-                      >
-                        Return
-                      </button>
+                      </div>                      
+                      
                       <button
                         className="YR_info-btn"
                         onClick={(e) => {
@@ -556,72 +526,60 @@ const handleReturnToBench = async (slotId) => {
                       >
                         Info
                       </button>
-                    </div>
-                  ) : (
-                    "Empty"
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* Bench Layout */}
-      <div className="YR_roster-page">
-        <div className="YR_roster-builder">
-          <div className="YR_bench">
-            <h2>Bench ({bench.length} Players)</h2>
-            <div className="YR_bench-list">
-              {bench.map((player) => (
-                <div
-                  key={player.id}
-                  className="YR_bench-item"
-                  style={getGradientBorderStyle(player)}
-                  onClick={() => handlePlayerClick(player)}
-                >
-                  <div className="YR_player-card">
-                    <img
-                      src={`/headshots/${safeFileName(player.name)}_headshot.jpg`}
-                      onError={(e) => { e.target.onerror = null; e.target.src = '/headshots/default.jpg'; }}
-                      alt={player.name}
-                      className="YR_player-portrait"
-                    />
-                    <div className="YR_player-card-content">
-                      <div className="YR_player-name">{player.name}</div>
-                      <div className="YR_player-positions">{player.position}</div>
-                      <div className="YR_player-fantasy-points">
-                        Fantasy Points:{" "}
-                        {getFantasyPoints(player)}
-                        {livePoints[player?.id]?.isLive && <span className="YR_live-indicator"> LIVE</span>}
-                      </div>
-                    </div>
+                      <button
+                        className="YR_info-btn"
+                        backgroundColor="red"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReturnToBench(slot.id);
+                        }}
+                      >
+                        Return
+                      </button>
+                    </>
+                  )}
+                </DroppableSlot>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        
+        {/* Bench Layout */}
+        <div className="YR_roster-page">
+          <div className="YR_roster-builder">
+            <div className="YR_bench">
+              <h2>Bench ({bench.length} Players)</h2>
+              <div className="YR_bench-list">
+                {bench.map(player => (
+                  <div key={player.id} className="YR_bench-item">
+                    <DraggablePlayer player={player} />
                     <button
                       className="YR_info-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openPlayerModal(player);
-                      }}
+                      onClick={() => openPlayerModal(player)}
                     >
                       Info
                     </button>
+                    
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
+        
+        {modalPlayer && (
+          <PlayerStatsModal
+            player={modalPlayer}
+            onClose={() => setModalPlayer(null)}
+            isRoster={true}
+            onPlayerDropped={(playerId) => {
+            }}
+          />
+        )}
       </div>
-
-      {modalPlayer && (
-        <PlayerStatsModal
-          player={modalPlayer}
-          onClose={() => setModalPlayer(null)}
-          isRoster={true}
-          onPlayerDropped={handlePlayerDropped}
-        />
-      )}
-    </div>
+    </DndProvider>
   );
 }
 

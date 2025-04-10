@@ -1229,5 +1229,114 @@ app.post('/api/leagues/leave', authenticate, async (req, res) => {
 });
 
 
+//Update player name
+app.post('/api/user/updateUserName', authenticate, async (req, res) => {
+  const { name } = req.body;
+  
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { name }
+    });
+    
+    res.json({ message: "Username updated successfully" });
+  } catch (error) {
+    console.error("Error updating username:", error);
+    res.status(500).json({ error: "Failed to update username" });
+  }
+});
+
+app.get('/api/user/getUserName', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    res.json({ name: user.name || "" });
+  } catch (error) {
+    console.error("Error fetching name:", error);
+    res.status(500).json({ error: "Failed to fetch name" });
+  }
+});
+
+app.get('/api/roster/:userId/playerNames', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.id || parseInt(req.params.userId);
+
+    const roster = await prisma.roster.findFirst({
+      where: { userId },
+      include: {
+        players: {
+          include: {
+            player: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!roster) {
+      return res.status(404).json({ error: "Roster not found" });
+    }
+
+    // Extract player names
+    const playerNames = roster.players.map((rosterPlayer) => ({
+      id: rosterPlayer.player.id,
+      name: rosterPlayer.player.name
+    }));
+
+    const playerTeams = roster.players.map((rosterPlayer) => ({
+      id: rosterPlayer.player.id,
+      team: rosterPlayer.player.team
+    }));
+
+    res.json({ playerNames });
+  } catch (error) {
+    console.error("Error fetching player names:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get('/api/roster/:userId/playerTeams', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.id || parseInt(req.params.userId);
+
+    const roster = await prisma.roster.findFirst({
+      where: { userId },
+      include: {
+        players: {
+          include: {
+            player: {
+              select: {
+                id: true,
+                team: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!roster) {
+      return res.status(404).json({ error: "Roster not found" });
+    }
+
+    // Extract player teams
+
+    const playerTeams = roster.players.map((rosterPlayer) => ({
+      id: rosterPlayer.player.id,
+      team: rosterPlayer.player.team
+    }));
+
+    res.json({ playerTeams });
+  } catch (error) {
+    console.error("Error fetching player teams:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 

@@ -52,7 +52,6 @@ const MenuBar = () => {
       id: 8,
       label: user ? user.name : 'Account',
       options: [
-        { text: 'Dashboard', type: 'internal', path: '/dashboard' },
         { text: 'Profile', type: 'internal', path: '/profile' },
         { text: 'Logout', type: 'action', action: handleLogout }
       ]

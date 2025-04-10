@@ -2,7 +2,9 @@
 .YR_roster-page {
   padding: 1rem;
   max-width: 1200px;
-  margin: 0 auto;
+  /* margin: 0 auto; */
+  margin-top: 100px;
+  margin-left: 50px;
   font-family: Arial, sans-serif;
 }
 
@@ -22,6 +24,8 @@
 .YR_court-container {
   position: relative;
   display: inline-block;
+  width: 65%;
+  height:60vh;
   border: 15px solid transparent;
   border-image: linear-gradient(45deg, #FFA500, #FF0000) 1;
   border-image-slice: 1;
@@ -30,15 +34,15 @@
 /* Court image */
 .YR_court-image {
   display: block;
-  width: 800px;  /* Adjust as needed */
-  height: auto;
+  width: 100%;  /* Adjust as needed */
+  height: 60vh;
 }
 
 /* Team slots positioned over the court image */
 .YR_team-slot {
   position: absolute;
-  width: 80px;
-  height: 60px;
+  width: 100px;
+  height: 90px;
   border: 1px solid #ddd;
   background: #fff;
   border-radius: 4px;
@@ -126,12 +130,13 @@
 .YR_slot-label {
   font-weight: bold;
   margin-bottom: 0.3rem;
-  color: #333;
+  color: #000000;
 }
 
 .YR_slot-player {
-  font-size: 0.85rem;
-  color: #555;
+  font-size: 1rem;
+  color: #000000;
+  font-weight: bold;
 }
 
 .YR_slot-content {

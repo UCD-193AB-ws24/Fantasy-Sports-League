@@ -1,223 +1,488 @@
+.profile-whole-wrapper{
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif ;
+  background: rgb(215, 213, 213);
+}
+
+.test-wrapper{
+  width: 100%;
+  height: 100vh;
+}
+.profile-avatar-name-container{
+  background: rgb(255, 255, 255);
+  margin-top: 20px;
+  margin-left: 45px;
+  width: 20%;
+  height: 50vh;
+  justify-content: center;
+  border-radius: 25px;
+}
+
+.what-is-this{
+  margin-left: 25%;
+  justify-content: center;
+}
+
 .profilepage-main-container{
-    font-family: Arial, Helvetica, sans-serif;
-  }
+  font-family: Arial, Helvetica, sans-serif;
+}
   
-  .profilepage-title-card{
+.profilepage-title-card{
+  position: absolute;
+  margin-left: 15%;
+  z-index: 1;
+  font-size: 50px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.profilepage-upperMenubar-container{
+  width: 86.3%;
+  height: 15vh;
+  background: gray;
+  position: absolute;
+  margin-left: 13.2%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+  /* border-color: black;
+  border-style: solid;
+  border-width: 5px; */
+}
+
+.upper-menubar {
+  display: flex;
+  gap: 200px; /* Space between buttons */
+  margin-top: 7%;
+  margin-right: 50%;
+}
+
+.profilepage-menu-item {
+  background: none;
+  border: none;
+  color: rgb(0, 0, 0);
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+
+.menu-item:hover {
+  background-color: #444;
+}
+
+.profilepage-name-date-container{
+  width: 25%;
+  height: 40vh;
+  background: rgb(236, 235, 235);
+  position: absolute;
+  margin-left: 13.2%;
+  border-style: solid;
+  border-color: gray;
+  border-width: 3px;
+  margin-top: 8.2%;
+}
+
+.profilepage-name-date-info-container{
+  position: absolute;
+  margin-top: -35%;
+  margin-left: 40%;
+  font-size: 40px;
+}
+
+.profilepage-name-date-aboutme-container{
+  position: absolute;
+  font-size: 35px;
+
+}
+
+.profilepage-achievements-container{
+  width: 25%;
+  height: 46.2vh;
+  background: rgb(236, 235, 235);
+  position: absolute;
+  margin-left: 13.2%;
+  margin-top: 27.8%;
+  border-style: solid;
+  border-color: gray;
+  border-width: 3px;
+}
+
+.profilepage-roster-info-container{
+  width: 61.3%;
+  height: 60vh;
+  background: rgb(236, 235, 235);
+  position: absolute;
+  margin-left: 38.4%;
+  margin-top: 8.2%;
+  border-style: solid;
+  border-color: gray;
+  border-width: 3px;
+}
+
+
+.profilepage-extra-container{
+  position: absolute;
+  width: 61.3%;
+  height: 26.1vh;
+  background: rgb(236, 235, 235);
+  margin-left: 38.4%;
+  margin-top: 37.6%;
+  border-style: solid;
+  border-color: gray;
+  border-width: 3px;
+}
+
+
+.profilepage-logout-container{
     position: absolute;
-    margin-left: 15%;
-    z-index: 1;
-    font-size: 50px;
-    font-family: Arial, Helvetica, sans-serif;
+    top:6%;
+    left: 95%;
   }
-  
-  .profilepage-upperMenubar-container{
-    width: 86.3%;
-    height: 15vh;
-    background: gray;
-    position: absolute;
-    margin-left: 13.2%;
-  
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 0;
-    /* border-color: black;
-    border-style: solid;
-    border-width: 5px; */
+
+  .Logout-title{
+    line-height: 10px;  
+    font-weight: bold;  
+    font-size: 20px;
   }
+  .button-49,
+.button-49:after {    
+  text-align: center;
+  width: 150px;
+  height: 76px;
+  font-family: 'Bebas Neue', sans-serif;
+  background: linear-gradient(45deg, transparent 5%, #eb0000 5%);
+  border: 0;
+  color: #ffd208;
+  letter-spacing: 3px;
+  outline: transparent;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button-49:after {
+  --slice-0: inset(50% 50% 50% 50%);
+  --slice-1: inset(80% -6px 0 0);
+  --slice-2: inset(50% -6px 30% 0);
+  --slice-3: inset(10% -6px 85% 0);
+  --slice-4: inset(40% -6px 43% 0);
+  --slice-5: inset(80% -6px 5% 0);
   
-  .upper-menubar {
-    display: flex;
-    gap: 200px; /* Space between buttons */
-    margin-top: 7%;
-    margin-right: 50%;
+  content: 'DONT GO';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 3%, #00E6F6 3%, #00E6F6 5%, #FF013C 5%);
+  text-shadow: -3px -3px 0px #F8F005, 3px 3px 0px #00E6F6;
+  clip-path: var(--slice-0);
+}
+
+.button-49:hover:after {
+  animation: 1s glitch;
+  animation-timing-function: steps(2, end);
+}
+
+@keyframes glitch {
+  0% {
+    clip-path: var(--slice-1);
+    transform: translate(-20px, -10px);
   }
-  
-  .profilepage-menu-item {
-    background: none;
-    border: none;
-    color: rgb(0, 0, 0);
-    font-size: 1.2rem;
-    font-weight: bold;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s;
+  10% {
+    clip-path: var(--slice-3);
+    transform: translate(10px, 10px);
   }
-  
-  .menu-item:hover {
-    background-color: #444;
+  20% {
+    clip-path: var(--slice-1);
+    transform: translate(-10px, 10px);
   }
-  
-  .profilepage-name-date-container{
-    width: 25%;
-    height: 40vh;
-    background: rgb(236, 235, 235);
-    position: absolute;
-    margin-left: 13.2%;
-    border-style: solid;
-    border-color: gray;
-    border-width: 3px;
-    margin-top: 8.2%;
+  30% {
+    clip-path: var(--slice-3);
+    transform: translate(0px, 5px);
   }
-  
-  .profilepage-name-date-info-container{
-    position: absolute;
-    margin-top: -35%;
-    margin-left: 40%;
-    font-size: 40px;
+  40% {
+    clip-path: var(--slice-2);
+    transform: translate(-5px, 0px);
   }
-  
-  .profilepage-name-date-aboutme-container{
-    position: absolute;
-    font-size: 35px;
-  
+  50% {
+    clip-path: var(--slice-3);
+    transform: translate(5px, 0px);
   }
-  
-  .profilepage-achievements-container{
-    width: 25%;
-    height: 46.2vh;
-    background: rgb(236, 235, 235);
-    position: absolute;
-    margin-left: 13.2%;
-    margin-top: 27.8%;
-    border-style: solid;
-    border-color: gray;
-    border-width: 3px;
+  60% {
+    clip-path: var(--slice-4);
+    transform: translate(5px, 10px);
   }
-  
-  .profilepage-roster-info-container{
-    width: 61.3%;
-    height: 60vh;
-    background: rgb(236, 235, 235);
-    position: absolute;
-    margin-left: 38.4%;
-    margin-top: 8.2%;
-    border-style: solid;
-    border-color: gray;
-    border-width: 3px;
+  70% {
+    clip-path: var(--slice-2);
+    transform: translate(-10px, 10px);
   }
-  
-  
-  .profilepage-extra-container{
-    position: absolute;
-    width: 61.3%;
-    height: 26.1vh;
-    background: rgb(236, 235, 235);
-    margin-left: 38.4%;
-    margin-top: 37.6%;
-    border-style: solid;
-    border-color: gray;
-    border-width: 3px;
+  80% {
+    clip-path: var(--slice-5);
+    transform: translate(20px, -10px);
   }
-  
-  
-  .profilepage-logout-container{
-      position: absolute;
-      top:6%;
-      left: 95%;
-    }
-  
-    .Logout-title{
-      line-height: 10px;  
-      font-weight: bold;  
-      font-size: 20px;
-    }
-    .button-49,
-  .button-49:after {    
-    text-align: center;
-    width: 150px;
-    height: 76px;
-    font-family: 'Bebas Neue', sans-serif;
-    background: linear-gradient(45deg, transparent 5%, #eb0000 5%);
-    border: 0;
-    color: #ffd208;
-    letter-spacing: 3px;
-    outline: transparent;
-    position: relative;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
+  90% {
+    clip-path: var(--slice-1);
+    transform: translate(-10px, 0px);
   }
-  
+  100% {
+    clip-path: var(--slice-1);
+    transform: translate(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .button-49,
   .button-49:after {
-    --slice-0: inset(50% 50% 50% 50%);
-    --slice-1: inset(80% -6px 0 0);
-    --slice-2: inset(50% -6px 30% 0);
-    --slice-3: inset(10% -6px 85% 0);
-    --slice-4: inset(40% -6px 43% 0);
-    --slice-5: inset(80% -6px 5% 0);
-    
-    content: 'DONT GO';
-    display: block;
+    width: 100px;
+    height: 50px;
+    line-height: 88px;
+  }
+}
+
+
+
+.profile-sidebar{
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 3%, #00E6F6 3%, #00E6F6 5%, #FF013C 5%);
-    text-shadow: -3px -3px 0px #F8F005, 3px 3px 0px #00E6F6;
-    clip-path: var(--slice-0);
+    font-weight: bold;
+    margin-top: 1%;
+    background: rgb(0, 0, 0);
+    width: 15%;
+    height: auto; /* let height adjust based on content */
+    border-radius: 25px;
+    text-align: center;
+    color: gold;
+    padding-bottom: 20px; /* Adjust the value as needed */
+    /* box-shadow: 20px 20px 10px grey; */
+}
+
+.profile-topbar{
+    position: absolute;
+    margin-top: 1%;
+    margin-left: 17.5%;
+    background: black;
+    width: 80%;
+    height: 10vh;
+    border-radius: 25px;
+}
+
+.profile-searchbar{
+  position: absolute;
+  background: rgb(255, 255, 255);
+  margin-left: 85%;
+  margin-top: 25px;
+  height: 4vh;
+  width: 12%;
+  border-radius: 25px;
+  text-align: left;
+  text-indent: 10px;
+}
+
+.profile-namebar{
+    position: absolute;
+    margin-top: 1%;
+    margin-left: 17.5%;
+    background: rgb(0, 0, 0);
+    width: 80%;
+    height: 25vh;
+    border-radius: 25px;
+}
+
+.profile-namebar h1{
+    color: gold;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif ;
+    margin-left: 15%;
+    font-size: 60px;
+}
+
+.profile-namebar-profilepic{
+    margin-top: 70px;
+    margin-left: 30%;
+    width: 40%;
+    height: 15vh;
+    background: white;
+    border-radius: 50%;
+}
+
+.profile-roster-container {
+  margin-top: -25%;
+  margin-left: 23%;
+  width: 75%;
+  height: auto; /* let height adjust based on content */
+  background: black;
+  border-radius: 25px;
+  color: white;
+  display: flex;            /* Enable flex layout */
+  flex-wrap: wrap;          /* Allow items to wrap onto a new row */
+  gap: 10px;                /* Optional: adds spacing between items */
+  padding: 10px;            /* Optional: adds inner spacing */
+}
+
+.profile-roster-container .profile-roster-item {
+  flex: 1 1 calc(20% - 10px); /* Basis of 20% width minus gap */
+  background: #333;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.profile-joinedat-Date{
+  position: static;
+  color: rgb(0, 0, 0);
+  font-size: 20px;
+  margin-left: 30%;
+}
+
+
+
+.profile-update-change-roster{
+  position: absolute;
+  margin-top: 14%;
+  margin-left: 84%;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
   }
   
-  .button-49:hover:after {
-    animation: 1s glitch;
-    animation-timing-function: steps(2, end);
+  .profile-update-change-roster a {
+    background: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+    text-decoration: none;
+    padding: 12px 20px;
+    margin: 0 10px;
+    font-size: 16px;
+    transition: background 0.3s ease;
+    border-radius: 5px;
   }
   
-  @keyframes glitch {
-    0% {
-      clip-path: var(--slice-1);
-      transform: translate(-20px, -10px);
-    }
-    10% {
-      clip-path: var(--slice-3);
-      transform: translate(10px, 10px);
-    }
-    20% {
-      clip-path: var(--slice-1);
-      transform: translate(-10px, 10px);
-    }
-    30% {
-      clip-path: var(--slice-3);
-      transform: translate(0px, 5px);
-    }
-    40% {
-      clip-path: var(--slice-2);
-      transform: translate(-5px, 0px);
-    }
-    50% {
-      clip-path: var(--slice-3);
-      transform: translate(5px, 0px);
-    }
-    60% {
-      clip-path: var(--slice-4);
-      transform: translate(5px, 10px);
-    }
-    70% {
-      clip-path: var(--slice-2);
-      transform: translate(-10px, 10px);
-    }
-    80% {
-      clip-path: var(--slice-5);
-      transform: translate(20px, -10px);
-    }
-    90% {
-      clip-path: var(--slice-1);
-      transform: translate(-10px, 0px);
-    }
-    100% {
-      clip-path: var(--slice-1);
-      transform: translate(0);
-    }
+  .profile-update-change-roster a:hover {
+    background-color: #555;
+    border-radius: 5px;
   }
   
-  @media (min-width: 768px) {
-    .button-49,
-    .button-49:after {
-      width: 100px;
-      height: 50px;
-      line-height: 88px;
+  @media (max-width: 600px) {
+    .profile-update-change-roster {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .profile-update-change-roster a {
+      margin: 5px 0;
     }
   }
+
+.profile-test-navbar{
+  margin-top: 1cqmax;
+  margin-left: 2%;
+  width: 95%;
+  height: 10vh;
+  background: white;
+  border-radius: 15px;
+}
+
+
+.profile-namebar-navbar {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  }
+  
+  .profile-namebar-navbar a {
+    border: solid;
+    background: white;
+    color: rgb(0, 0, 0);
+    text-decoration: none;
+    padding: 12px 20px;
+    margin: 0 40px;
+    font-size: 16px;
+    transition: background 0.3s ease;
+    border-radius: 5px;
+    margin-top: 25px;
+
+  }
+  
+  .profile-namebar-navbar a:hover {
+    background-color: #555;
+    border-radius: 5px;
+  }
+  
+  @media (max-width: 600px) {
+    .profile-namebar-navbar {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .profile-namebar-navbar a {
+      margin: 5px 0;
+    }
+  }
+
+
+.profile-namebar-navbar-container{
+  background: transparent;
+  margin-top: 500px;
+}
+
+  /* From Uiverse.io by vinodjangid07 */ 
+  .Btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    padding: 4px;
+    margin: 0;
+  }
+  
+  .svg {
+    width: 16px;
+    height: 16px;
+    fill: black;
+    color: black;
+  }
+  
+  .Btn:active {
+    transform: scale(0.95);
+  }
+  
+.profile-namebar-changename-bar{
+
+  /* box-sizing: border-box; */
+  font-family: inherit;
+  font-size: 30px;
+  vertical-align: baseline;
+  font-weight: bolder;
+  line-height: 1.29;
+  letter-spacing: .16px;
+  border: none;
+  /* border-radius: 0; */
+  /* outline: 2px solid transparent; */
+  /* outline-offset: -2px; */
+  width: 300px;
+  height: auto;
+  /* border-bottom: 1px solid #8d8d8d; */
+  background-color: #ffffff;
+  padding: 0 16px;
+  color: rgb(0, 0, 0);
+  transition: background-color 70ms cubic-bezier(.2,0,.38,.9),outline 70ms cubic-bezier(.2,0,.38,.9);  
+}
+
+
+.profile-namebar-save-button{
+  margin-top: -50px;
+  margin-left: 15%;
+}
+.profile-namebar-cancel-button{
+  margin-top: -50px;
+}
 
