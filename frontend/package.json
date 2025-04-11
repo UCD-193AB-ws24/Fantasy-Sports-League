@@ -17,6 +17,8 @@
     "google": "^2.1.0",
     "passport": "^0.7.0",
     "react": "^19.0.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.3.0"
   },
