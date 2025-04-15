@@ -1,251 +1,71 @@
-/* src/mainScreen.css */
-.main-container {
-  background-color: rgb(60, 60, 60);
-  min-height: 100vh;
-  width: 100%;
+/* mainScreen.css */
+
+.main {
+  background: #f4f3ef;
+  position: relative;
+  padding-top: 100px;
 }
 
-.arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 40px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  border-radius: 5px;
+/* General section styling */
+.section {
+  padding: 60px 0;
 }
 
-.arrow:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-.left {
-  left: 20px;
-}
-
-.right {
-  right: 20px;
-}
-
-
-.main-picture {
-  width: 100%;
-  height: 1000px;
-  background-size: cover;
-  background-position: center;
-}
-
-.play-Container {
-  font-weight: bold;
-  font-size: 150px;
-  color: transparent;
-  margin-left: 50px;
-}
-
-.risk-Container {
-  font-weight: bold;
-  font-size: 90px;
-  color: transparent;
-  margin-left: 100px;
-}
-
-.win-Container {
-  font-weight: bold;
-  font-size: 200px;
-  color: transparent;
-  margin-left: 400px;
-}
-
-.main-Info {
-  margin-top: 200px;
-  width: 100%;
-  background-color: #292828;
-  height: 125vh;
-}
-
-.latest-News {
-  color: rgb(255, 255, 255);
-  font-size: 100px;
-  font-weight: bold;
-  justify-content: center;
+.text-center {
   text-align: center;
-  font-family: Andale Mono, monospace;
 }
 
-.teamBar {
-  font-weight: bold;
-  margin-top: -100px;
+/* Titles and descriptions */
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #3c4858;
 }
 
-.three-column-container {
-  background-image: url("celtics.jpg");
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  justify-content: space-between;
+.description {
+  font-size: 1.125rem;
+  color: #555;
+}
+
+/* Button */
+.btn-round {
+  border-radius: 30px;
+  padding: 12px 30px;
+}
+
+/* Info section styling */
+.info {
+  text-align: center;
   padding: 20px;
-  height: 100vh;
 }
-
-.timeline-section {
-  width: 15%;
-  padding: 10px;
+.info .icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  color: #f96332;
 }
-
-
-.event-details-section {
-  width: 85%;
-  padding: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  overflow-y: auto;
-  height:98vh;
-}
-
-.images-container {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.event-title{
-  justify-content: center;
-  text-align: center;
-}
-
-.game-Image {
-  max-width: 50%; 
-  height:100%;
-  max-height: 800px;
-  object-fit: fill;
-  border-radius: 8px;
-}
-
-
-.background-info h2 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.background-info p {
-  margin-top: 5px;
-  font-size: 18px;
-}
-.background-text {
-  position: absolute;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  color: white;
-  padding: 15px 20px;
-  border-radius: 10px;
-  width: 50%;
-}
-
-.background-title {
-  font-size: 32px;
+.info .info-title {
+  font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 10px;
 }
 
-.background-description {
-  font-weight: bold;
-  margin-left: -100%;
-  font-size: 55px;
-  color:gold
-}
-
-.moreInfo{
-  font-weight: bold;
-  font-size: 25px;
-  margin-left: -100%;
-}
-
-.login-container {
-  position: absolute;
-  top: 50%;
-  left: 25%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-.specialTitle{
-  font-size: 110px;
-  margin-top: -11%;
-  margin-left:-100%;
-  color: gold;
-}
-
-.login-button {
-  background-color: black;
-  color: gold;
-  font-weight: bold;
-  font-size: 18px;
+/* Card profile styles */
+.card-profile {
+  margin: 20px 0;
   border: none;
-  margin-top:100px;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
+}
+.card-avatar img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto;
 }
 
-.login-button:hover {
-  background-color: #0056b3;
-}
-
-.sign-in-box {
-  margin-top: 15px;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  color: white;
-  width: 300px;
-}
-
-.sign-in-box input {
+/* Contact form */
+.contact-form label {
+  font-weight: bold;
+  margin-bottom: 5px;
   display: block;
-  width: 90%;
-  padding: 10px;
-  margin: 10px auto;
-  border: none;
-  border-radius: 5px;
-}
-
-.sign-in-box button {
-  width: 100%;
-  padding: 10px;
-  background-color: #28a745;
-  border: none;
-  color: white;
-  font-size: 16px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.sign-in-box button:hover {
-  background-color: #218838;
-}
-
-
-.roster-button {
-  display: inline-block;
-  background-color: black;
-  color: gold;
-  font-weight: bold;
-  font-size: 40px;
-  padding: 10px 20px;
-  text-decoration: none;
-  border-radius: 8px;
-  margin-top: 20px;
-  transition: background-color 0.3s ease;
-  margin-left: -100%;
-}
-
-.roster-button:hover {
-  background-color: gold;
+  color: #3c4858;
 }
