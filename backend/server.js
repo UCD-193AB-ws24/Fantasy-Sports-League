@@ -411,23 +411,92 @@ app.post('/api/players/getCommonPlayerInfo', (req, res) => {
         }
     });
 });
-// Endpoint to get players for a given league.
+
 app.get('/api/leagues/:leagueId/players', async (req, res) => {
-    try {
-      const leagueId = Number(req.params.leagueId);
-      // Fetch LeaguePlayer records and include the related Player data.
-      const leaguePlayers = await prisma.leaguePlayer.findMany({
-        where: { leagueId },
-        include: { player: true },
-      });
-      // Map to extract the Player object (which now includes computed fields).
-      const players = leaguePlayers.map(lp => lp.player);
-      res.json(players);
-    } catch (error) {
-      console.error("Error fetching league players:", error);
-      res.status(500).json({ error: "Internal server error" });
+  try {
+    const leagueId = Number(req.params.leagueId);
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const page = parseInt(req.query.page, 10) || 1;
+    const skip = (page - 1) * limit;
+
+    // Retrieve filtering parameters from the query string.
+    const teamFilter = req.query.team || "";          // e.g. "Boston Celtics"
+    const positionFilter = req.query.position || "";    // e.g. "PG"
+    const search = req.query.search || "";
+
+    // Retrieve sorting parameters.
+    const sortKey = req.query.sortKey || null; // e.g. "avgFanPts", "rank", etc.
+    const sortDirection = req.query.sortDirection || 'default'; // "asc" or "desc" (if not default)
+    let orderBy = {};
+    if (sortKey && sortDirection !== 'default') {
+      // Order by the field on the related player record.
+      orderBy = { player: { [sortKey]: sortDirection } };
     }
-  });
+
+    // Build the where clause. Start with leagueId.
+    let whereClause = { leagueId };
+
+    // If filtering by team, add that constraint.
+    if (teamFilter && teamFilter !== "All Teams") {
+      whereClause = {
+        ...whereClause,
+        player: { 
+          ...whereClause.player,
+          team: teamFilter,
+        },
+      };
+    }
+
+    // If filtering by position, use the "has" operator (assuming positions is an array field).
+    if (positionFilter) {
+      whereClause = {
+        ...whereClause,
+        player: {
+          ...whereClause.player,
+          positions: { has: positionFilter },
+        },
+      };
+    }
+
+    // If a search term is provided, filter by player name (case-insensitive).
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        player: {
+          ...whereClause.player,
+          name: { contains: search, mode: "insensitive" },
+        },
+      };
+    }
+
+    // Count total players matching the filters.
+    const totalPlayers = await prisma.leaguePlayer.count({
+      where: whereClause,
+    });
+
+    // Fetch players applying filtering, sorting and pagination.
+    const leaguePlayers = await prisma.leaguePlayer.findMany({
+      where: whereClause,
+      orderBy: Object.keys(orderBy).length ? orderBy : undefined,
+      skip: skip,
+      take: limit,
+      include: { player: true },
+    });
+
+    const players = leaguePlayers.map(lp => lp.player);
+    const totalPages = Math.ceil(totalPlayers / limit);
+
+    res.json({
+      players,
+      page,
+      totalPages,
+      totalPlayers,
+    });
+  } catch (error) {
+    console.error("Error fetching league players:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
   
   // Endpoint to get gamelogs for a given player.
   app.get('/api/players/:playerId/gamelogs', async (req, res) => {
