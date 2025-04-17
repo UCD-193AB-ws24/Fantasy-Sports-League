@@ -41,14 +41,41 @@ const handleDropPlayer = async () => {
     alert(error.response?.data?.error || "Error dropping player");
   }
 };
+useEffect(() => {
+  fetch('/profile_photo/imageConfig.json')
+    .then(res => res.json())
+    .then(config => {
+      console.log("Loaded imageConfig:", config);
+      setImageConfig(config);
+    })
+    .catch(err => console.error("Error loading image config:", err));
+}, []);
+  const normalizeString = (str) => {
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  };
 
+  // Utility function to create a safe file name from player name
+  const safeFileName = (name) => {
+    return name.split(' ').join('_');
+  };
+  const [imageConfig, setImageConfig] = useState({});
+  const configKey = `${safeFileName(player.name)}_profile`;
+  console.log(`Config key for player "${player.name}":`, configKey);
+  const config = imageConfig[configKey] || {};
+  const objectPosition = config.objectPosition;
+  const imageZoom = config.imageZoom;
+
+  // Fallback styling and team logo based on team.
   let primaryColor = (player.teamColors && player.teamColors[0]) || "#007bff";
   let secondaryColor = (player.teamColors && player.teamColors[1]) || "#0056b3";
-  let statsImage = player.statsImage || "default-player-image.png";
-  let  teamLogo = player.teamLogo || "default-team-logo.png";
-  let objectPosition = player.objectPosition || "center";
-  let imageZoom = player.imageZoom || 1;
-  let positionsText = player.positions && player.positions.length > 0 ? player.positions.join(', ') : '-';
+  let teamLogo = player.teamLogo || "default-team-logo.png";
+  let positionsText = (player.positions && player.positions.length > 0) ? player.positions.join(', ') : '-';
   if (player.team == "Celtics") {
     primaryColor = "#007A33";
     secondaryColor = "#BA9653";
@@ -182,12 +209,13 @@ const handleDropPlayer = async () => {
               style={{ borderImage: `linear-gradient(to bottom, ${primaryColor}, ${secondaryColor}) 1` }}
             >
               <img
-                src={statsImage}
-                alt={player.name}
+                src={`/profile_photo/${safeFileName(player.name)}_profile.jpg`}
+                onError={(e) => { e.target.onerror = null; e.target.src = '/headshots/default.jpg'; }}
                 className="PS_player-image"
                 style={{
-                  objectPosition: objectPosition,
-                  transform: `scale(${imageZoom})`
+                  objectFit: 'cover',            // Crop to fill container
+                  objectPosition: objectPosition,  // Use custom object position from config
+                  transform: `scale(${imageZoom})` // Apply custom zoom from config
                 }}
               />
             </div>
@@ -291,18 +319,15 @@ const handleDropPlayer = async () => {
                   <p><strong>True Shooting %:</strong> {player.advancedStats?.trueShooting || "?"}</p>
                   <p><strong>Win Shares:</strong> {player.advancedStats?.winShares || "?"}</p>
                   <p><strong>Box Plus-Minus:</strong> {player.advancedStats?.boxPlusMinus || "?"}</p>
-                  <p><strong>VORP:</strong> {player.advancedStats?.vorp || "?"}</p>
-                  
-                  {/* Add drop button here - properly nested */}
+                  <p><strong>VORP:</strong> {player.advancedStats?.vorp || "?"}</p>         
+                  {/* Add the drop button only when viewing from roster */}
                   {isRoster && (
-                    <div className="PS_drop-button-container">
-                      <button 
-                        className="PS_drop-button"
-                        onClick={handleDropPlayer}
-                      >
-                        Drop Player
-                      </button>
-                    </div>
+                    <button 
+                      className="PS_drop-button" 
+                      onClick={handleDropPlayer}
+                    >
+                      Drop Player
+                    </button>
                   )}
                 </div>
               </div>

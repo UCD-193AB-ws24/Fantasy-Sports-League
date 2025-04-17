@@ -1,150 +1,80 @@
-.register-wrapper {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-}
-.title-header{
-    font-size: 50px;
-    margin-top: 0px;
-    /* margin-left:50px; */
-}
-.picture-change{
-    font-style: italic;
+/* Full-page background and centering */
+.RP_register-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
 }
 
-.register-form {
-    flex: 1;
-    padding: 100px;
-    text-align: center;
+/* Card container styled similar to login */
+.RP_register-form {
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 400px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center all form-group blocks horizontally */
 }
 
-.texts{
-    text-align: left;
-    margin-left:70px;
-}
-
-.first-last{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;  
-    margin: 10px auto;
-    width: 100%;
-    max-width: 550px;
-    margin-top : 1%;
-    /* margin-left: 10%; */
-  }
-  
-.user-pass{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0px;  
-    margin: 10px auto;
-    width: 100%;
-    max-width: 700px;
-    margin-top : 1%;
-    margin-left: 0%;
-  }
-
-  .DOB{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;  
-    margin: 10px auto;
-    width: 100%;
-    max-width: 250px;
-    margin-top : 1%;
-    margin-left: 10%;
-  }
-  
-  .email-container {
-    display: flex;
-    align-items: left;
-    justify-content: left;
-    gap: 10px;  
-    margin: 25px auto;
-    width: 1300%;
-    max-width: 1200px;
-    margin-top : 1%;
-    margin-left: 10%;
-  }
-.logo-section {
-    flex: 1;
-    padding: 40px;
-    text-align: center;
-    background-color: #f4f4f4;
-}
-
-.logo-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 15px;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-}
-
-.logo-item {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    padding: 10px;
-    border-radius: 8px;
-    transition: transform 0.3s;
-}
-
-.logo-item:hover {
-    transform: scale(1.1);
-}
-
-.logo-image {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-}
-
-.button-23 {
-  background-color: #FFFFFF;
-  border: 1px solid #222222;
-  border-radius: 8px;
-  box-sizing: border-box;
-  color: #222222;
-  cursor: pointer;
-  display: inline-block;
-  font-family: Circular,-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20px;
-  margin: 0;
-  outline: none;
-  padding: 13px 23px;
-  position: relative;
+/* Title header style */
+.RP_title-header {
+  font-size: 32px;
+  margin-bottom: 20px;
+  color: black;
   text-align: center;
-  text-decoration: none;
-  touch-action: manipulation;
-  transition: box-shadow .2s,-ms-transform .1s,-webkit-transform .1s,transform .1s;
-  user-select: none;
-  -webkit-user-select: none;
-  width: auto;
 }
 
-.button-23:focus-visible {
-  box-shadow: #222222 0 0 0 2px, rgba(255, 255, 255, 0.8) 0 0 0 4px;
-  transition: box-shadow .2s;
+/* Each label+input block has a fixed max-width, then centered via margin */
+.RP_form-group {
+  width: 100%;
+  max-width: 300px;  /* Adjust as needed for wider or narrower fields */
+  margin: 0 auto 15px auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.button-23:active {
-  background-color: #F7F7F7;
-  border-color: #000000;
-  transform: scale(.96);
+/* Label style (left-aligned by default) */
+.RP_form-group label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: black;
+  /* If you prefer center-aligned labels, add: text-align: center; */
 }
 
-.button-23:disabled {
-  border-color: #DDDDDD;
-  color: #DDDDDD;
-  cursor: not-allowed;
-  opacity: 1;
+/* Input fields fill the width of the .RP_form-group */
+.RP_input-field {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  background-color: #fff;
+}
+
+/* Remove Chrome’s yellow autofill background */
+input:-webkit-autofill {
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+/* Register button, centered and filling the same max-width as .RP_form-group */
+.RP_button-23 {
+  width: 100%;
+  max-width: 300px; 
+  padding: 12px;
+  background-color: #36454F;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.RP_button-23:hover {
+  background-color: #555;
 }

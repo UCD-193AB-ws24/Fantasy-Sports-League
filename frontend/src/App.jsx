@@ -24,6 +24,9 @@ import Knicks from './components/pages/Knicks/KnicksmainScreen';
 import Dashboard from './DashBoard';
 import Login from "./components/Login";
 import ProfilePage from "./Profile";
+import LeaguesPage from './components/pages/LeaguePage';
+import CreateLeague from './components/pages/CreateLeague';
+import LeagueDetails from './components/pages/LeagueDetails';
 
 function App() {
   return (
@@ -121,6 +124,21 @@ function App() {
               <ProfilePage />
             </ProtectedRoute>
           } />
+          <Route path="/leagues" element={
+          <ProtectedRoute>
+            <LeaguesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/leagues/create" element={
+          <ProtectedRoute>
+            <CreateLeague />
+          </ProtectedRoute>
+        } />
+        <Route path="/leagues/:leagueId" element={
+          <ProtectedRoute>
+            <LeagueDetails />
+          </ProtectedRoute>
+        } />
 
         </Routes>
       </Router>

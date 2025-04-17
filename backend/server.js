@@ -411,23 +411,92 @@ app.post('/api/players/getCommonPlayerInfo', (req, res) => {
         }
     });
 });
-// Endpoint to get players for a given league.
+
 app.get('/api/leagues/:leagueId/players', async (req, res) => {
-    try {
-      const leagueId = Number(req.params.leagueId);
-      // Fetch LeaguePlayer records and include the related Player data.
-      const leaguePlayers = await prisma.leaguePlayer.findMany({
-        where: { leagueId },
-        include: { player: true },
-      });
-      // Map to extract the Player object (which now includes computed fields).
-      const players = leaguePlayers.map(lp => lp.player);
-      res.json(players);
-    } catch (error) {
-      console.error("Error fetching league players:", error);
-      res.status(500).json({ error: "Internal server error" });
+  try {
+    const leagueId = Number(req.params.leagueId);
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const page = parseInt(req.query.page, 10) || 1;
+    const skip = (page - 1) * limit;
+
+    // Retrieve filtering parameters from the query string.
+    const teamFilter = req.query.team || "";          // e.g. "Boston Celtics"
+    const positionFilter = req.query.position || "";    // e.g. "PG"
+    const search = req.query.search || "";
+
+    // Retrieve sorting parameters.
+    const sortKey = req.query.sortKey || null; // e.g. "avgFanPts", "rank", etc.
+    const sortDirection = req.query.sortDirection || 'default'; // "asc" or "desc" (if not default)
+    let orderBy = {};
+    if (sortKey && sortDirection !== 'default') {
+      // Order by the field on the related player record.
+      orderBy = { player: { [sortKey]: sortDirection } };
     }
-  });
+
+    // Build the where clause. Start with leagueId.
+    let whereClause = { leagueId };
+
+    // If filtering by team, add that constraint.
+    if (teamFilter && teamFilter !== "All Teams") {
+      whereClause = {
+        ...whereClause,
+        player: { 
+          ...whereClause.player,
+          team: teamFilter,
+        },
+      };
+    }
+
+    // If filtering by position, use the "has" operator (assuming positions is an array field).
+    if (positionFilter) {
+      whereClause = {
+        ...whereClause,
+        player: {
+          ...whereClause.player,
+          positions: { has: positionFilter },
+        },
+      };
+    }
+
+    // If a search term is provided, filter by player name (case-insensitive).
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        player: {
+          ...whereClause.player,
+          name: { contains: search, mode: "insensitive" },
+        },
+      };
+    }
+
+    // Count total players matching the filters.
+    const totalPlayers = await prisma.leaguePlayer.count({
+      where: whereClause,
+    });
+
+    // Fetch players applying filtering, sorting and pagination.
+    const leaguePlayers = await prisma.leaguePlayer.findMany({
+      where: whereClause,
+      orderBy: Object.keys(orderBy).length ? orderBy : undefined,
+      skip: skip,
+      take: limit,
+      include: { player: true },
+    });
+
+    const players = leaguePlayers.map(lp => lp.player);
+    const totalPages = Math.ceil(totalPlayers / limit);
+
+    res.json({
+      players,
+      page,
+      totalPages,
+      totalPlayers,
+    });
+  } catch (error) {
+    console.error("Error fetching league players:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
   
   // Endpoint to get gamelogs for a given player.
   app.get('/api/players/:playerId/gamelogs', async (req, res) => {
@@ -1033,6 +1102,355 @@ app.post('/api/user/updateTeamName', authenticate, async (req, res) => {
     res.status(500).json({ error: "Failed to update team name" });
   }
 });
+// Create a new league
+app.post('/api/leagues/create', authenticate, async (req, res) => {
+  try {
+    const { name, maxTeams, scoringFormat, draftType, isPrivate } = req.body;
+    const userId = req.user.id;
+    
+    // Create league with current user as commissioner
+    const league = await prisma.league.create({
+      data: {
+        name,
+        commissionerId: userId.toString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        scoringFormat: scoringFormat || 'Standard',
+        maxTeams: maxTeams || 10,
+        draftType: draftType || 'Snake',
+        isPrivate: isPrivate !== undefined ? isPrivate : true,
+        waiverType: 'Standard',
+        // Add the commissioner as the first user
+        users: {
+          connect: { id: userId }
+        }
+      }
+    });
+    
+    // Create initial league players pool - this would normally populate with NBA players
+    // You already have code that fetches players, so we'd use that
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'League created successfully', 
+      league 
+    });
+  } catch (error) {
+    console.error("Error creating league:", error);
+    res.status(500).json({ error: "Failed to create league" });
+  }
+});
 
+// Join a league
+app.post('/api/leagues/join', authenticate, async (req, res) => {
+  try {
+    const { leagueId } = req.body;
+    const userId = req.user.id;
+    
+    // Find the league
+    const league = await prisma.league.findUnique({
+      where: { id: parseInt(leagueId) },
+      include: { users: true }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    // Check if league is full
+    if (league.users.length >= league.maxTeams) {
+      return res.status(400).json({ error: "League is full" });
+    }
+    
+    // Check if user is already in the league
+    if (league.users.some(user => user.id === userId)) {
+      return res.status(400).json({ error: "You are already in this league" });
+    }
+    
+    // Add user to league
+    await prisma.league.update({
+      where: { id: parseInt(leagueId) },
+      data: {
+        users: {
+          connect: { id: userId }
+        }
+      }
+    });
+    
+    res.json({ success: true, message: 'Successfully joined league' });
+  } catch (error) {
+    console.error("Error joining league:", error);
+    res.status(500).json({ error: "Failed to join league" });
+  }
+});
+
+// Get all leagues
+app.get('/api/leagues', async (req, res) => {
+  try {
+    const leagues = await prisma.league.findMany({
+      include: {
+        users: true
+      }
+    });
+    
+    res.json(leagues);
+  } catch (error) {
+    console.error("Error fetching leagues:", error);
+    res.status(500).json({ error: "Failed to fetch leagues" });
+  }
+});
+
+// Get leagues for current user - FIXED
+app.get('/api/leagues/user', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Use a more direct query to get all leagues where the user is a member
+    const leagues = await prisma.league.findMany({
+      where: {
+        users: {
+          some: {
+            id: userId
+          }
+        }
+      },
+      include: {
+        users: true
+      }
+    });
+    
+    res.json(leagues);
+  } catch (error) {
+    console.error("Error fetching user leagues:", error);
+    res.status(500).json({ error: "Failed to fetch user leagues" });
+  }
+});
+
+// Get a specific league
+app.get('/api/leagues/:leagueId', async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            teamName: true
+          }
+        }
+      }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    res.json(league);
+  } catch (error) {
+    console.error("Error fetching league:", error);
+    res.status(500).json({ error: "Failed to fetch league" });
+  }
+});
+
+// Update league settings (commissioner only)
+app.put('/api/leagues/:leagueId', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    const userId = req.user.id;
+    const { name, maxTeams, scoringFormat, draftType, isPrivate, draftDate } = req.body;
+    
+    // Check if user is commissioner
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    if (league.commissionerId !== userId.toString()) {
+      return res.status(403).json({ error: "Only commissioner can update league settings" });
+    }
+    
+    // Update league
+    const updatedLeague = await prisma.league.update({
+      where: { id: leagueId },
+      data: {
+        name: name || league.name,
+        maxTeams: maxTeams || league.maxTeams,
+        scoringFormat: scoringFormat || league.scoringFormat,
+        draftType: draftType || league.draftType,
+        isPrivate: isPrivate !== undefined ? isPrivate : league.isPrivate,
+        draftDate: draftDate ? new Date(draftDate) : league.draftDate,
+        updatedAt: new Date()
+      }
+    });
+    
+    res.json({ success: true, message: 'League updated successfully', league: updatedLeague });
+  } catch (error) {
+    console.error("Error updating league:", error);
+    res.status(500).json({ error: "Failed to update league" });
+  }
+});
+
+// Leave a league
+app.post('/api/leagues/leave', authenticate, async (req, res) => {
+  try {
+    const { leagueId } = req.body;
+    const userId = req.user.id;
+    
+    // Find the league
+    const league = await prisma.league.findUnique({
+      where: { id: parseInt(leagueId) },
+      include: { users: true }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    // Check if user is in the league
+    if (!league.users.some(user => user.id === userId)) {
+      return res.status(400).json({ error: "You are not a member of this league" });
+    }
+    
+    // Prevent commissioner from leaving (they must transfer ownership first)
+    if (league.commissionerId === userId.toString()) {
+      return res.status(400).json({ 
+        error: "As the commissioner, you cannot leave the league. Please transfer commissioner rights to another user first." 
+      });
+    }
+    
+    // Remove user from league
+    await prisma.league.update({
+      where: { id: parseInt(leagueId) },
+      data: {
+        users: {
+          disconnect: { id: userId }
+        }
+      }
+    });
+    
+    res.json({ success: true, message: 'Successfully left league' });
+  } catch (error) {
+    console.error("Error leaving league:", error);
+    res.status(500).json({ error: "Failed to leave league" });
+  }
+});
+
+
+//Update player name
+app.post('/api/user/updateUserName', authenticate, async (req, res) => {
+  const { name } = req.body;
+  
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { name }
+    });
+    
+    res.json({ message: "Username updated successfully" });
+  } catch (error) {
+    console.error("Error updating username:", error);
+    res.status(500).json({ error: "Failed to update username" });
+  }
+});
+
+app.get('/api/user/getUserName', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    res.json({ name: user.name || "" });
+  } catch (error) {
+    console.error("Error fetching name:", error);
+    res.status(500).json({ error: "Failed to fetch name" });
+  }
+});
+
+app.get('/api/roster/:userId/playerNames', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.id || parseInt(req.params.userId);
+
+    const roster = await prisma.roster.findFirst({
+      where: { userId },
+      include: {
+        players: {
+          include: {
+            player: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!roster) {
+      return res.status(404).json({ error: "Roster not found" });
+    }
+
+    // Extract player names
+    const playerNames = roster.players.map((rosterPlayer) => ({
+      id: rosterPlayer.player.id,
+      name: rosterPlayer.player.name
+    }));
+
+    const playerTeams = roster.players.map((rosterPlayer) => ({
+      id: rosterPlayer.player.id,
+      team: rosterPlayer.player.team
+    }));
+
+    res.json({ playerNames });
+  } catch (error) {
+    console.error("Error fetching player names:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get('/api/roster/:userId/playerTeams', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.id || parseInt(req.params.userId);
+
+    const roster = await prisma.roster.findFirst({
+      where: { userId },
+      include: {
+        players: {
+          include: {
+            player: {
+              select: {
+                id: true,
+                team: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!roster) {
+      return res.status(404).json({ error: "Roster not found" });
+    }
+
+    // Extract player teams
+
+    const playerTeams = roster.players.map((rosterPlayer) => ({
+      id: rosterPlayer.player.id,
+      team: rosterPlayer.player.team
+    }));
+
+    res.json({ playerTeams });
+  } catch (error) {
+    console.error("Error fetching player teams:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 

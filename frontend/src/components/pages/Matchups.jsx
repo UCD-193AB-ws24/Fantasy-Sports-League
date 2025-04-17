@@ -224,7 +224,7 @@ const loadOpponentRoster = async (opponentUserId) => {
     console.log("League players:", leaguePlayersResponse.data);
     
     // Filter to get a diverse set of players for different positions
-    const availablePlayers = leaguePlayersResponse.data || [];
+    const availablePlayers = leaguePlayersResponse.data.players || [];
     
     // Create an opponent roster with players from the league
     const opponentRoster = [];

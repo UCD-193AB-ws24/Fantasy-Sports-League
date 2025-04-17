@@ -40,3 +40,29 @@
 .read-the-docs {
   color: #888;
 }
+#MenuBarWrapper,
+#MenuBarWrapper * {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 15px !important;
+  /* Any additional properties, e.g.: */
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+body.profile-page .info .description {
+  font-size: 16px !important;
+  line-height: 1.5;
+}
+
+body.profile-page .info .info-title {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+}
+
+body.profile-page .motto h1 {
+  font-size: 48px !important;
+}
+
+body.profile-page .motto h3 {
+  font-size: 24px !important;
+}

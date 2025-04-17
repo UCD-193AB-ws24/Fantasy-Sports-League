@@ -1,0 +1,331 @@
+/* src/components/pages/LeagueDetails.css */
+.LD_container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  .LD_header-section {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  .LD_league-name {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  
+  .LD_league-info {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    color: #666;
+  }
+  
+  /* Tabs */
+  .LD_tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 1rem;
+  }
+  
+  .LD_tab {
+    padding: 0.75rem 1rem;
+    border: none;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .LD_tab:hover {
+    background-color: #e9ecef;
+  }
+  
+  .LD_active-tab {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .LD_active-tab:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Tab Content */
+  .LD_tab-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+  }
+  
+  /* Standings Table */
+  .LD_standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .LD_standings-table th,
+  .LD_standings-table td {
+    padding: 0.75rem;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .LD_standings-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+  }
+  
+  .LD_standings-table tr:hover {
+    background-color: #f5f5f5;
+  }
+  
+  /* Managers Section */
+  .LD_managers-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .LD_manager-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  
+  .LD_manager-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  
+  .LD_manager-card p {
+    margin: 0.5rem 0;
+    color: #666;
+  }
+  
+  .LD_commissioner-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: #ffc107;
+    color: #212529;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  
+  /* Settings */
+  .LD_settings-form {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .LD_form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .LD_form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .LD_input,
+  .LD_select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  
+  .LD_select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem top 50%;
+    background-size: 0.65rem auto;
+  }
+  
+  .LD_checkbox-group {
+    display: flex;
+    align-items: center;
+  }
+  
+  .LD_checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .LD_checkbox {
+    margin-right: 0.5rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+  
+  .LD_button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+  }
+  
+  .LD_button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 120px;
+  }
+  
+  .LD_cancel-button {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+  
+  .LD_cancel-button:hover {
+    background-color: #e9ecef;
+  }
+  
+  .LD_save-button,
+  .LD_edit-button {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .LD_save-button:hover,
+  .LD_edit-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Settings View */
+  .LD_settings-view {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .LD_settings-item {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+  }
+  
+  .LD_settings-label {
+    font-weight: 600;
+    min-width: 150px;
+    color: #333;
+  }
+  
+  .LD_settings-value {
+    flex-grow: 1;
+    color: #666;
+  }
+  
+  .LD_edit-button {
+    margin-top: 1.5rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .LD_tabs {
+      justify-content: center;
+    }
+    
+    .LD_tab {
+      flex: 1 0 auto;
+      text-align: center;
+    }
+    
+    .LD_settings-item {
+      flex-direction: column;
+    }
+    
+    .LD_settings-label {
+      margin-bottom: 0.25rem;
+    }
+  }
+
+  .LD_leave-league {
+    margin-top: 2rem;
+    text-align: center;
+  }
+  
+  .LD_leave-button {
+    background-color: #dc3545;
+    color: white;
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .LD_leave-button:hover {
+    background-color: #c82333;
+  }
+  
+  /* Confirmation Dialog */
+  .LD_confirmation-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .LD_confirmation-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .LD_confirmation-content h3 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .LD_confirmation-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .LD_confirm-button {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .LD_confirm-button:hover {
+    background-color: #c82333;
+  }
+  
+  .LD_confirm-button:disabled,
+  .LD_leave-button:disabled {
+    background-color: #f5c6cb;
+    cursor: not-allowed;
+  }

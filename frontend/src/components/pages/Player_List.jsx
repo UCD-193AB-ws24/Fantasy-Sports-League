@@ -1,52 +1,115 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../AuthContext";
-import React, { useState, useEffect } from 'react';
 import MenuBar from '../MenuBar';
 import PlayerStatsModal from './PlayerStats';
 import './Player_List.css';
 import axios from 'axios';
 
 const Player_List = () => {
+  // State for the players (the current page returned from the server)
   const [players, setPlayers] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  // Filtering and sorting state
   const [search, setSearch] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('');
+  const [selectedPosition, setSelectedPosition] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'default' });
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  // Other state
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [roster, setRoster] = useState([]);
-  
+
+  // Static mappings for teams and positions.
+  // teamMap maps friendly team names to the value stored in your database.
+  const teamMap = {
+    "Atlanta Hawks": "Hawks",
+    "Boston Celtics": "Celtics",
+    "Brooklyn Nets": "Nets",
+    "Charlotte Hornets": "Hornets",
+    "Chicago Bulls": "Bulls",
+    "Cleveland Cavaliers": "Cavaliers",
+    "Dallas Mavericks": "Mavericks",
+    "Denver Nuggets": "Nuggets",
+    "Detroit Pistons": "Pistons",
+    "Golden State Warriors": "Warriors",
+    "Houston Rockets": "Rockets",
+    "Indiana Pacers": "Pacers",
+    "Los Angeles Clippers": "Clippers",
+    "Los Angeles Lakers": "Lakers",
+    "Memphis Grizzlies": "Grizzlies",
+    "Miami Heat": "Heat",
+    "Milwaukee Bucks": "Bucks",
+    "Minnesota Timberwolves": "Timberwolves",
+    "New Orleans Pelicans": "Pelicans",
+    "New York Knicks": "Knicks",
+    "Oklahoma City Thunder": "Thunder",
+    "Orlando Magic": "Magic",
+    "Philadelphia 76ers": "76ers",
+    "Phoenix Suns": "Suns",
+    "Portland Trail Blazers": "Trail Blazers",
+    "Sacramento Kings": "Kings",
+    "San Antonio Spurs": "Spurs",
+    "Toronto Raptors": "Raptors",
+    "Utah Jazz": "Jazz",
+    "Washington Wizards": "Wizards"
+  };
+
+  // Array of friendly team names.
+  const allFriendlyTeamNames = Object.keys(teamMap);
+  // For positions, here we use a static list.
+  const allPositions = ["Guard", "Guard-Forward", "Forward", "Forward-Center", "Center"];
+
+  const playersPerPage = 20;
   const { user } = useContext(AuthContext);
   const userId = user?.id;
 
-  // Normalize string for better search functionality
+  // Normalize string for filtering.
   const normalizeString = (str) => {
     return str
-      .normalize('NFD')                          // decompose accented letters
-      .replace(/[\u0300-\u036f]/g, "")           // remove diacritics
-      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")  // remove punctuation
-      .replace(/\s+/g, " ")                      // normalize spaces
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
+      .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
   };
 
-  // Utility function to create a safe file name from player name
-  const safeFileName = (name) => {
-    return name.split(' ').join('_');
-  };
+  // Create a safe filename for the player headshot.
+  const safeFileName = (name) => name.split(' ').join('_');
 
+  // Fetch players from the server, passing filter, sort, and pagination parameters.
   useEffect(() => {
-    // 1) Fetch all league players
-    fetch('http://localhost:5001/api/leagues/1/players')
-      .then(res => res.json())
-      .then(async (fetchedPlayers) => {
-        console.log('Fetched league players:', fetchedPlayers);
+    const params = new URLSearchParams();
+    params.append("limit", playersPerPage);
+    params.append("page", currentPage);
+    if (selectedTeam) {
+      // selectedTeam is already the database value, for example: "Hawks"
+      params.append("team", selectedTeam);
+    }
+    if (selectedPosition) {
+      params.append("position", selectedPosition);
+    }
+    if (search) {
+      params.append("search", search);
+    }
+    if (sortConfig.key && sortConfig.direction !== "default") {
+      params.append("sortKey", sortConfig.key);
+      params.append("sortDirection", sortConfig.direction);
+    }
+    const url = `http://localhost:5001/api/leagues/1/players?${params.toString()}`;
+    console.log("Fetching:", url);
 
-        // 2) For each player, fetch their game logs and compute averages in the front end
+    fetch(url)
+      .then(res => res.json())
+      .then(async (data) => {
+        console.log('Fetched league players (server-side):', data);
+        // For each player, fetch game logs and compute derived statistics.
         const updatedPlayers = await Promise.all(
-          fetchedPlayers.map(async (p) => {
+          data.players.map(async (p) => {
             try {
-              // Fetch that player's logs
               const logsRes = await fetch(`http://localhost:5001/api/players/${p.id}/gamelogs`);
               const logsData = await logsRes.json();
-
-              // Compute sums for points, rebounds, etc.
               let totalPoints = 0, totalReb = 0, totalAst = 0, totalStl = 0, totalBlk = 0, totalFP = 0;
               logsData.forEach(g => {
                 totalPoints += g.pts ?? 0;
@@ -56,7 +119,6 @@ const Player_List = () => {
                 totalBlk += g.blk ?? 0;
                 totalFP += g.fanPts ?? 0;
               });
-
               const gp = logsData.length;
               p.gamesPlayed = gp;
               p.avgPts = gp > 0 ? totalPoints / gp : 0;
@@ -65,32 +127,32 @@ const Player_List = () => {
               p.avgStl = gp > 0 ? totalStl / gp : 0;
               p.avgBlk = gp > 0 ? totalBlk / gp : 0;
               p.avgFanPts = gp > 0 ? totalFP / gp : 0;
-
             } catch (err) {
               console.error(`Error fetching logs for ${p.name}:`, err);
-              // If logs can't be fetched, leave them as 0 or undefined
             }
-
             return p;
           })
         );
-
         setPlayers(updatedPlayers);
+        setTotalPages(data.totalPages);
       })
       .catch(err => console.error(err));
-      
-    // Fetch the user's roster to know which players are already added
+
     fetchRoster();
-  }, []);
-  
+  }, [currentPage, sortConfig, selectedTeam, selectedPosition, search]);
+
+  // Reset page to 1 when any filter value changes.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedTeam, selectedPosition]);
+
+  // Fetch roster.
   const fetchRoster = async () => {
     try {
       const response = await axios.get(`http://localhost:5001/api/roster/${userId}`, {
         withCredentials: true
       });
       const rosterData = response.data;
-      
-      // Create array of player IDs on roster for easy checking
       const rosterPlayerIds = rosterData.players.map(rp => rp.player.id);
       setRoster(rosterPlayerIds);
     } catch (error) {
@@ -98,134 +160,158 @@ const Player_List = () => {
     }
   };
 
-  // Filter by search term using normalized strings
-  const filteredPlayers = players.filter(player =>
-    normalizeString(player.name).includes(normalizeString(search))
-  );
+  // Use the server-side filtered/sorted players directly.
+  const playersToDisplay = players;
+
+  // Ensure the current page value is valid.
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  // Sorting: update sortConfig and reset page to 1.
+  const handleSort = (key) => {
+    setCurrentPage(1);
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'default') {
+        setSortConfig({ key, direction: 'desc' });
+      } else if (sortConfig.direction === 'desc') {
+        setSortConfig({ key, direction: 'asc' });
+      } else if (sortConfig.direction === 'asc') {
+        setSortConfig({ key: null, direction: 'default' });
+      }
+    } else {
+      setSortConfig({ key, direction: 'desc' });
+    }
+  };
 
   const handleInfoClick = (player) => {
     setSelectedPlayer(player);
   };
-  
+
   const handleAddToRoster = async (player, event) => {
-    event.stopPropagation(); // Prevent triggering other click handlers
-    
+    event.stopPropagation();
     try {
       const response = await axios.post('http://localhost:5001/api/roster/add', {
         userId,
         playerId: player.id
-      }, {
-        withCredentials: true
-      });
-      
-      // Update local roster state to reflect the change
+      }, { withCredentials: true });
       setRoster([...roster, player.id]);
-      
-      // Show success message with position assignment
       alert(response.data.message);
-      
-      // Optional: Refresh the page to show updated roster
-      // If you uncomment this, also add a confirmation dialog
-      // if (confirm("Player added successfully! View your roster now?")) {
-      //   window.location.href = '/YourRoster';
-      // }
     } catch (error) {
       console.error("Error adding player to roster:", error);
       alert(error.response?.data?.error || "Error adding player to roster");
     }
   };
-  
-  const isPlayerOnRoster = (playerId) => {
-    return roster.includes(playerId);
-  };
+
+  const isPlayerOnRoster = (playerId) => roster.includes(playerId);
 
   return (
     <>
       <MenuBar />
       <div className="PL_container">
         <h1 className="PL_header">NBA Player List</h1>
-        <input
-          type="text"
-          className="PL_searchBar"
-          placeholder="Search players..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+
+        {/* Filters & Search */}
+        <div className="PL_filtersContainer">
+          <select
+            value={
+              // Reverse lookup: if selectedTeam is set, find its friendly name; otherwise, blank.
+              Object.keys(teamMap).find(key => teamMap[key] === selectedTeam) || ""
+            }
+            onChange={(e) =>
+              // When the user selects a friendly name, store its mapped value.
+              setSelectedTeam(teamMap[e.target.value] || "")
+            }
+          >
+            <option value="">All Teams</option>
+            {allFriendlyTeamNames.map(team => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedPosition}
+            onChange={(e) => setSelectedPosition(e.target.value)}
+          >
+            <option value="">All Positions</option>
+            {allPositions.map(position => (
+              <option key={position} value={position}>
+                {position}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="Search players..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
         <table className="PL_table">
           <thead>
             <tr>
-              <th>Rank</th>
+              <th onClick={() => handleSort('rank')}>
+                Rank {sortConfig.key === 'rank' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th className="PL_colPhoto"></th>
               <th>Name</th>
               <th>Team</th>
               <th>Position</th>
               <th>Jersey</th>
-              <th>Avg. Fan Pts</th>
-              <th>GP</th>
-              <th>PTS</th>
-              <th>REB</th>
-              <th>AST</th>
-              <th>STL</th>
-              <th>BLK</th>
+              <th onClick={() => handleSort('avgFanPts')}>
+                Avg. Fan Pts {sortConfig.key === 'avgFanPts' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('gamesPlayed')}>
+                GP {sortConfig.key === 'gamesPlayed' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgPts')}>
+                PTS {sortConfig.key === 'avgPts' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgReb')}>
+                REB {sortConfig.key === 'avgReb' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgAst')}>
+                AST {sortConfig.key === 'avgAst' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgStl')}>
+                STL {sortConfig.key === 'avgStl' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
+              <th onClick={() => handleSort('avgBlk')}>
+                BLK {sortConfig.key === 'avgBlk' ? (sortConfig.direction === 'desc' ? '↓' : '↑') : ''}
+              </th>
               <th>Info</th>
               <th>Roster</th>
             </tr>
           </thead>
           <tbody>
-            {filteredPlayers.map((player) => (
+            {playersToDisplay.map((player) => (
               <tr key={player.id}>
                 <td>{player.rank ?? '-'}</td>
-                <td>
+                <td className="PL_colPhoto">
                   <img 
                     src={`/headshots/${safeFileName(player.name)}_headshot.jpg`} 
                     onError={(e) => { e.target.onerror = null; e.target.src = '/headshots/default.jpg'; }}
-                    style={{ width: "50px", height: "auto", marginRight: "8px", verticalAlign: "middle" }}
+                    style={{ width: "60px", height: "auto", display: "block", margin: "0 auto" }}
                     alt={player.name}
                   />
-                  {player.name}
                 </td>
+                <td>{player.name}</td>
                 <td>{player.team || '-'}</td>
-                <td>
-                  {player.positions && player.positions.length > 0
-                    ? player.positions.join(', ')
-                    : '-'}
-                </td>
+                <td>{player.positions && player.positions.length > 0 ? player.positions.join(', ') : '-'}</td>
                 <td>{player.jersey ?? '?'}</td>
-                <td>
-                  {player.avgFanPts !== undefined
-                    ? player.avgFanPts.toFixed(1)
-                    : '-'}
-                </td>
+                <td>{player.avgFanPts !== undefined ? player.avgFanPts.toFixed(1) : '-'}</td>
                 <td>{player.gamesPlayed ?? 0}</td>
+                <td>{player.avgPts !== undefined ? player.avgPts.toFixed(1) : '-'}</td>
+                <td>{player.avgReb !== undefined ? player.avgReb.toFixed(1) : '-'}</td>
+                <td>{player.avgAst !== undefined ? player.avgAst.toFixed(1) : '-'}</td>
+                <td>{player.avgStl !== undefined ? player.avgStl.toFixed(1) : '-'}</td>
+                <td>{player.avgBlk !== undefined ? player.avgBlk.toFixed(1) : '-'}</td>
                 <td>
-                  {player.avgPts !== undefined
-                    ? player.avgPts.toFixed(1)
-                    : '-'}
-                </td>
-                <td>
-                  {player.avgReb !== undefined
-                    ? player.avgReb.toFixed(1)
-                    : '-'}
-                </td>
-                <td>
-                  {player.avgAst !== undefined
-                    ? player.avgAst.toFixed(1)
-                    : '-'}
-                </td>
-                <td>
-                  {player.avgStl !== undefined
-                    ? player.avgStl.toFixed(1)
-                    : '-'}
-                </td>
-                <td>
-                  {player.avgBlk !== undefined
-                    ? player.avgBlk.toFixed(1)
-                    : '-'}
-                </td>
-                <td>
-                  <button
-                    className="PL_infoButton"
-                    onClick={() => handleInfoClick(player)}
-                  >
+                  <button className="PL_infoButton" onClick={() => handleInfoClick(player)}>
                     Info
                   </button>
                 </td>
@@ -233,10 +319,7 @@ const Player_List = () => {
                   {isPlayerOnRoster(player.id) ? (
                     <span className="PL_onRoster">On Roster</span>
                   ) : (
-                    <button
-                      className="PL_addButton"
-                      onClick={(e) => handleAddToRoster(player, e)}
-                    >
+                    <button className="PL_addButton" onClick={(e) => handleAddToRoster(player, e)}>
                       Add
                     </button>
                   )}
@@ -245,13 +328,41 @@ const Player_List = () => {
             ))}
           </tbody>
         </table>
+
+        <div className="PL_pagination" style={{ marginTop: "1rem", textAlign: "center" }}>
+          <button 
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+            disabled={currentPage === 1}
+            style={{ marginRight: "10px" }}
+          >
+            Prev
+          </button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <button 
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+            disabled={currentPage === totalPages}
+            style={{ marginLeft: "10px" }}
+          >
+            Next
+          </button>
+          <input
+            type="number"
+            min="1"
+            max={totalPages}
+            value={currentPage}
+            onChange={(e) => {
+              let page = Number(e.target.value);
+              if (Number.isNaN(page) || page < 1) page = 1;
+              if (page > totalPages) page = totalPages;
+              setCurrentPage(page);
+            }}
+            style={{ width: "50px", marginLeft: "10px", textAlign: "center" }}
+          />
+        </div>
       </div>
       
       {selectedPlayer && (
-        <PlayerStatsModal 
-          player={selectedPlayer} 
-          onClose={() => setSelectedPlayer(null)} 
-        />
+        <PlayerStatsModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
       )}
     </>
   );
