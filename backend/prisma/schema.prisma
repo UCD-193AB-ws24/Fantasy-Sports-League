@@ -19,6 +19,7 @@ datasource db {
 //leagues
 //player's roster - must have userId associated
 
+// Keep the lowercase "user" model name to match your database
 model user {
   id        Int            @id @default(autoincrement())
   name      String         @db.VarChar(255)
@@ -32,6 +33,8 @@ model user {
   googleID  String?        @unique // Add this field for Google OAuth
   teamName  String?
   league    League?        @relation(fields: [leagueId], references: [id])
+  // Added this field to create the relation between user and roster
+  rosters   roster[]
   roster    LeaguePlayer[] @relation("UserRoster")
 }
 
@@ -47,7 +50,9 @@ model Player {
   totalFanPts   Int? // New: Total Number of FantasyPoints
   stats         playerStats[]
   leaguePlayers LeaguePlayer[]
+  // Use lowercase to match your database
   rosterPlayers rosterPlayer[]
+  draftPicks    DraftPick[]
 }
 
 model Game {
@@ -55,12 +60,14 @@ model Game {
   date        DateTime      @db.Timestamptz(6)
   matchup     String
   finalScore  String? // New: Final game score for the game
+  // Keep lowercase to match existing database
   playerStats playerStats[]
 
   @@unique([date, matchup], name: "date_matchup")
 }
 
 //models for stats of a single game
+// Keep lowercase to match your database
 model playerStats {
   id               Int      @id @default(autoincrement())
   playerId         Int
@@ -86,26 +93,32 @@ model playerStats {
   @@unique([playerId, gameId], name: "playerId_gameId")
 }
 
+// Keep lowercase to match your database
 model roster {
   id        Int            @id @default(autoincrement())
   userId    Int
   teamName  String         @db.VarChar(255)
   leagueId  Int?
+  // Remove duplicate players field and just keep one
   players   rosterPlayer[]
   createdAt DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt DateTime       @default(now()) @db.Timestamptz(6)
+  // Use lowercase 'user' to match the model name
+  user      user           @relation(fields: [userId], references: [id])
+  league    League?        @relation(fields: [leagueId], references: [id])
 }
 
 model LeaguePlayer {
   id            Int  @id @default(autoincrement())
   leagueId      Int
   playerId      Int
-  // If null, the player is available in the league’s player_list.
-  // If set, this player has been claimed and is now part of a user’s roster.
+  // If null, the player is available in the league's player_list.
+  // If set, this player has been claimed and is now part of a user's roster.
   rosterOwnerId Int?
 
   league      League @relation(fields: [leagueId], references: [id])
   player      Player @relation(fields: [playerId], references: [id])
+  // Use lowercase 'user' to match the model name
   rosterOwner user?  @relation("UserRoster", fields: [rosterOwnerId], references: [id])
 }
 
@@ -122,13 +135,20 @@ model League {
   tradeDeadline  DateTime?      @db.Timestamptz(6)
   waiverType     String         @db.VarChar(255) // e.g., "FAAB", "Rolling", "None" etc
   isPrivate      Boolean        @default(true) @db.Boolean
+  // Use lowercase 'user' to match the model name
   users          user[]
+  // Use lowercase 'roster' to match the model name
+  rosters        roster[]
   leaguePlayers  LeaguePlayer[]
+  draftCompleted Boolean        @default(false)
+  draft          Draft?
 }
 
+// Keep lowercase to match your database
 model rosterPlayer {
   id        Int      @id @default(autoincrement())
   rosterId  Int
+  // Use lowercase 'roster' to match the model name
   roster    roster   @relation(fields: [rosterId], references: [id])
   playerId  Int
   player    Player   @relation(fields: [playerId], references: [id])
@@ -137,4 +157,40 @@ model rosterPlayer {
   createdAt DateTime @default(now())
 
   @@unique([rosterId, playerId])
+}
+
+// Draft model for storing draft settings and status
+model Draft {
+  id                Int         @id @default(autoincrement())
+  leagueId          Int         @unique // One draft per league
+  status            String      @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  draftDate         DateTime?
+  timePerPick       Int         @default(90) // Seconds per pick
+  currentRound      Int?
+  currentPickInRound Int?
+  pickTimeRemaining Int?
+  draftOrderType    String      @default("RANDOM") // RANDOM, MANUAL
+  draftOrder        Int[]       // Array of user IDs in draft order
+  manualDraftOrder  Int[]       // Array of user IDs for manual draft order
+  allowDraftPickTrading Boolean  @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  league            League      @relation(fields: [leagueId], references: [id])
+  picks             DraftPick[]
+}
+
+// DraftPick model for storing individual draft picks
+model DraftPick {
+  id          Int      @id @default(autoincrement())
+  draftId     Int
+  userId      Int
+  playerId    Int
+  round       Int
+  pickInRound Int
+  pickNumber  Int
+  timestamp   DateTime @default(now())
+  draft       Draft    @relation(fields: [draftId], references: [id])
+  player      Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([draftId, pickNumber])
 }

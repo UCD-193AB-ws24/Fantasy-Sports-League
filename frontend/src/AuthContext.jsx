@@ -10,6 +10,17 @@ export const AuthProvider = ({ children }) => {
    const [loading, setLoading] = useState(true);
    const [activeUsers, setActiveUsers] = useState(0);
 
+    // Create a unique session ID for this browser tab
+    const [sessionId] = useState(() => {
+        // Generate a new session ID or retrieve the existing one for this tab
+        const existingId = sessionStorage.getItem("sessionId");
+        if (existingId) return existingId;
+        
+        const newId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+        sessionStorage.setItem("sessionId", newId);
+        return newId;
+       }, []);
+
 
    useEffect(() => {
        const ws = new WebSocket("ws://localhost:5002");
@@ -24,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
 
        return () => ws.close();
-   }, []);
+   });
 
 
    useEffect(() => {
@@ -38,18 +49,18 @@ export const AuthProvider = ({ children }) => {
 
                const userData = response.data;
                setUser(userData);
-               sessionStorage.setItem("user", JSON.stringify(userData));
+               sessionStorage.setItem(`user_${sessionId}`, JSON.stringify(userData));
            } catch (error) {
                console.error("User not authenticated:", error);
                setUser(null);
-               sessionStorage.removeItem("user");
+               sessionStorage.removeItem(`user_${sessionId}`);
            } finally {
                setLoading(false);
            }
        };
 
 
-       const storedUser = sessionStorage.getItem("user");
+       const storedUser = sessionStorage.getItem(`user_${sessionId}`);
        if (storedUser) {
            setUser(JSON.parse(storedUser));
            setLoading(false);
@@ -57,49 +68,50 @@ export const AuthProvider = ({ children }) => {
            fetchProfile();
        }
 
-
-       const handleStorageChange = (event) => {
-           if (event.key === "logout") {
-               setUser(null);
-               sessionStorage.removeItem("user");
-           }
-       };
-
-
-       window.addEventListener("storage", handleStorageChange);
-       return () => {
-           window.removeEventListener("storage", handleStorageChange);
-       };
-   }, []);
+        // Clear session when closing tab
+        const handleBeforeUnload = () => {
+            sessionStorage.removeItem(`user_${sessionId}`);
+        };
+        
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, [sessionId]);
 
 
-   const logout = async () => {
-       try {
-           await axios.post("http://localhost:5001/logout", {}, {
-               withCredentials: true
-           });
+    const logout = async () => {
+        try {
+            // Get the session ID
+            const sessionId = sessionStorage.getItem("sessionId");
+            
+            // Use original logout endpoint but with sessionId as query param
+            await axios.post(`http://localhost:5001/logout${sessionId ? `?sessionId=${sessionId}` : ''}`, {}, {
+                withCredentials: true
+            });
+    
+            // Clear user data
+            setUser(null);
+            sessionStorage.removeItem(`user_${sessionId}`);
+            sessionStorage.setItem("logout", Date.now()); // Keep this for cross-tab communication
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
 
-
-           setUser(null);
-           sessionStorage.removeItem("user");
-           sessionStorage.setItem("logout", Date.now());
-       } catch (error) {
-           console.error("Logout failed:", error);
-       }
-   };
-
-
-   return (
-       <AuthContext.Provider value={{
-           user,
-           setUser,
-           logout,
-           loading,
-           activeUsers,
-           isAuthenticated: !!user
-       }}>
-           {children}
-       </AuthContext.Provider>
-   );
-};
+    return (
+        <AuthContext.Provider value={{
+            user,
+            setUser,
+            logout,
+            loading,
+            activeUsers,
+            isAuthenticated: !!user,
+            sessionId // Exporting the sessionId
+        }}>
+            {children}
+        </AuthContext.Provider>
+    );
+ };
 

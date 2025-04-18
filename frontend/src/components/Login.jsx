@@ -112,14 +112,25 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
+  
     try {
-      const response = await axios.post('http://localhost:5001/login', formData, {
-        withCredentials: true
-      });
+      // Get the sessionId from context
+      const sessionId = localStorage.getItem("sessionId") || 
+        `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Add sessionId as a query param
+      const response = await axios.post(`http://localhost:5001/login?sessionId=${sessionId}`, 
+        formData, 
+        { withCredentials: true }
+      );
+      
       setUser(response.data.user);
       await fetchProfile();
-      localStorage.setItem("authSession", Date.now().toString());
+      
+      // Store the session for this tab only
+      sessionStorage.setItem(`authSession_${sessionId}`, Date.now().toString());
+      sessionStorage.setItem("sessionId", sessionId);
+      
       navigate(from);
     } catch (err) {
       setError(err.response?.data?.error);

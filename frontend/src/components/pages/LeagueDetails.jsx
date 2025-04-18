@@ -201,6 +201,12 @@ const LeagueDetails = () => {
           >
             Rosters
           </button>
+          <button 
+            className={`LD_tab ${activeTab === 'draft' ? 'LD_active-tab' : ''}`}
+            onClick={() => setActiveTab('draft')}
+          >
+            Draft
+          </button>
           {isCommissioner && (
             <button 
               className={`LD_tab ${activeTab === 'settings' ? 'LD_active-tab' : ''}`}
@@ -460,19 +466,60 @@ const LeagueDetails = () => {
             </div>
           )}
           
-          {activeTab === 'dues' && (
-            <div className="LD_dues">
-              <h2>League Dues</h2>
-              <p>League dues information will be displayed here.</p>
-            </div>
-          )}
-          
           {activeTab === 'rosters' && (
             <div className="LD_rosters">
               <h2>League Rosters</h2>
               <p>Team rosters will be displayed here.</p>
             </div>
           )}
+          {activeTab === 'draft' && (
+        <div className="LD_draft">
+          <h2>League Draft</h2>
+          
+          {league.draftDate ? (
+            <div className="LD_draft-info">
+              <p><strong>Draft Date:</strong> {new Date(league.draftDate).toLocaleString()}</p>
+              <p><strong>Draft Type:</strong> {league.draftType}</p>
+              
+              {new Date(league.draftDate) > new Date() ? (
+                <p className="LD_draft-status LD_upcoming">
+                  <span className="LD_status-dot"></span> Upcoming Draft
+                </p>
+              ) : (
+                league.draftCompleted ? (
+                  <p className="LD_draft-status LD_completed">
+                    <span className="LD_status-dot"></span> Draft Completed
+                  </p>
+                ) : (
+                  <p className="LD_draft-status LD_ready">
+                    <span className="LD_status-dot"></span> Ready to Start
+                  </p>
+                )
+              )}
+            </div>
+          ) : (
+            <p>No draft has been scheduled yet.</p>
+          )}
+          
+          <div className="LD_draft-buttons">
+            {isCommissioner && !league.draftCompleted && (
+              <button
+                onClick={() => navigate(`/leagues/${league.id}/draft/setup`)}
+                className="LD_button LD_setup-button"
+              >
+                {league.draftDate ? 'Edit Draft Settings' : 'Setup Draft'}
+              </button>
+            )}
+            
+            <button
+              onClick={() => navigate(`/leagues/${league.id}/draft`)}
+              className="LD_button LD_draft-button"
+            >
+              {league.draftCompleted ? 'View Draft Results' : 'Enter Draft Room'}
+            </button>
+          </div>
+        </div>
+      )}
           {/* Leave League Button - Only show for non-commissioners */}
             {user && league && league.commissionerId !== user.id.toString() && (
             <div className="LD_leave-league">

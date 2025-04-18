@@ -329,3 +329,82 @@
     background-color: #f5c6cb;
     cursor: not-allowed;
   }
+
+  /* Draft Tab Styles */
+.LD_draft {
+  padding: 20px;
+}
+
+.LD_draft-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.LD_draft-status {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  margin-top: 15px;
+}
+
+.LD_status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.LD_upcoming .LD_status-dot {
+  background-color: #ffc107;
+  box-shadow: 0 0 5px #ffc107;
+}
+
+.LD_upcoming {
+  color: #856404;
+}
+
+.LD_completed .LD_status-dot {
+  background-color: #28a745;
+  box-shadow: 0 0 5px #28a745;
+}
+
+.LD_completed {
+  color: #155724;
+}
+
+.LD_ready .LD_status-dot {
+  background-color: #007bff;
+  box-shadow: 0 0 5px #007bff;
+}
+
+.LD_ready {
+  color: #004085;
+}
+
+.LD_draft-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+  justify-content: center;
+}
+
+.LD_setup-button {
+  background-color: #6c757d;
+}
+
+.LD_setup-button:hover {
+  background-color: #5a6268;
+}
+
+.LD_draft-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.LD_draft-button:hover {
+  background-color: #c82333;
+}

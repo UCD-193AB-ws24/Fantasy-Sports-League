@@ -1,0 +1,198 @@
+/* src/components/pages/DraftSetup.css */
+.DS_container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .DS_header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #2b2b2b;
+    font-size: 24px;
+  }
+  
+  .DS_form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .DS_form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .DS_form-group label {
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
+  }
+  
+  .DS_help-text {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+  }
+  
+  .DS_input,
+  .DS_select {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.2s;
+  }
+  
+  .DS_input:focus,
+  .DS_select:focus {
+    border-color: #0077cc;
+    outline: none;
+  }
+  
+  .DS_radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .DS_radio-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .DS_radio-option input[type="radio"] {
+    margin-top: 3px;
+  }
+  
+  .DS_checkbox-group {
+    margin-top: 10px;
+  }
+  
+  .DS_checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  
+  .DS_checkbox {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .DS_button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  
+  .DS_button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .DS_cancel-button {
+    background-color: #f0f0f0;
+    color: #333;
+  }
+  
+  .DS_cancel-button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .DS_save-button {
+    background-color: #0077cc;
+    color: white;
+  }
+  
+  .DS_save-button:hover {
+    background-color: #0066b3;
+  }
+  
+  .DS_randomize-button {
+    background-color: #8e44ad;
+    color: white;
+    align-self: flex-start;
+    margin-bottom: 10px;
+  }
+  
+  .DS_randomize-button:hover {
+    background-color: #7d3c98;
+  }
+  
+  .DS_draft-order-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .DS_draft-order-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .DS_draft-order-item:last-child {
+    border-bottom: none;
+  }
+  
+  .DS_draft-order-item:nth-child(odd) {
+    background-color: #f0f0f0;
+  }
+  
+  .DS_draft-position {
+    font-weight: bold;
+    width: 30px;
+  }
+  
+  .DS_team-name {
+    flex: 1;
+    font-weight: 600;
+  }
+  
+  .DS_user-name {
+    color: #666;
+    margin-right: 20px;
+  }
+  
+  .DS_order-buttons {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .DS_order-button {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ddd;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .DS_order-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .DS_order-button:not(:disabled):hover {
+    background-color: #ccc;
+  }

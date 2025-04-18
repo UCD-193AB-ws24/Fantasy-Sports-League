@@ -1,0 +1,485 @@
+/* src/components/pages/DraftBoard.css */
+.DB_container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .DB_draft-not-started {
+    text-align: center;
+  }
+  
+  .DB_draft-info {
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  .DB_commissioner-actions {
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+  }
+  
+  .DB_button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0077cc;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_button:hover {
+    background-color: #0066b3;
+  }
+  
+  .DB_edit-button {
+    background-color: #6c757d;
+  }
+  
+  .DB_edit-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .DB_start-button {
+    background-color: #dc3545;
+  }
+  
+  .DB_start-button:hover {
+    background-color: #c82333;
+  }
+  
+  /* Draft Board Main Layout */
+  .DB_draft-board {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+    background-color: #f8f9fa;
+  }
+  
+  .DB_header {
+    background-color: #212529;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .DB_header h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  .DB_draft-status {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .DB_round-pick {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  .DB_current-team {
+    font-size: 18px;
+  }
+  
+  .DB_timer {
+    font-size: 24px;
+    font-weight: bold;
+    padding: 5px 10px;
+    background-color: #f8f9fa;
+    color: #dc3545;
+    border-radius: 4px;
+  }
+  
+  .DB_completed-message {
+    font-size: 20px;
+    font-weight: bold;
+    color: #28a745;
+  }
+  
+  .DB_content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  
+  .DB_left-panel {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #dee2e6;
+    overflow: hidden;
+  }
+  
+  .DB_right-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* Filter Section */
+  .DB_filter-section {
+    padding: 15px;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .DB_search-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .DB_filters {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .DB_filter-select {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+  }
+  
+  /* Players Section */
+  .DB_players-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+  }
+  
+  .DB_players-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .DB_players-table th,
+  .DB_players-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .DB_players-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  
+  .DB_player-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .DB_player-image {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .DB_highlighted-player {
+    background-color: #e6f7ff;
+  }
+  
+  .DB_action-button {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_draft-button {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .DB_draft-button:hover {
+    background-color: #c82333;
+  }
+  
+  .DB_queue-button {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .DB_queue-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .DB_queue-button:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+  }
+  
+  /* Queue Section */
+  .DB_queue-section {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    height: 40%;
+    overflow-y: auto;
+  }
+  
+  .DB_queue-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .DB_empty-queue {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    background-color: #e9ecef;
+    border-radius: 4px;
+  }
+  
+  .DB_queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .DB_queue-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+  }
+  
+  .DB_queue-rank {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+  
+  .DB_queue-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  
+  .DB_queue-player-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .DB_queue-player-name {
+    font-weight: bold;
+  }
+  
+  .DB_queue-player-details {
+    font-size: 12px;
+    color: #6c757d;
+  }
+  
+  .DB_queue-actions {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .DB_queue-action-button {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .DB_queue-action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .DB_remove-button {
+    color: #dc3545;
+  }
+  
+  .DB_draft-queue-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_draft-queue-button:hover {
+    background-color: #c82333;
+  }
+  
+  .DB_auto-pick-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_auto-pick-button:hover {
+    background-color: #5a6268;
+  }
+  
+  /* Picks Section */
+  .DB_picks-section {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+  }
+  
+  .DB_picks-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .DB_picks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .DB_pick-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+  }
+  
+  .DB_pick-number {
+    width: 40px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .DB_pick-team {
+    width: 100px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .DB_pick-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  
+  .DB_pick-player-image {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .DB_pick-player-name {
+    font-weight: bold;
+  }
+  
+  .DB_pick-player-details {
+    font-size: 12px;
+    color: #6c757d;
+  }
+  
+  .DB_current-pick {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+  }
+  
+  .DB_on-clock {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  
+  /* Position colors */
+  .DB_position-pg {
+    border-left: 5px solid #007bff;
+  }
+  
+  .DB_position-sg {
+    border-left: 5px solid #28a745;
+  }
+  
+  .DB_position-g {
+    border-left: 5px solid #17a2b8;
+  }
+  
+  .DB_position-sf {
+    border-left: 5px solid #ffc107;
+  }
+  
+  .DB_position-pf {
+    border-left: 5px solid #fd7e14;
+  }
+  
+  .DB_position-f {
+    border-left: 5px solid #e83e8c;
+  }
+  
+  .DB_position-c {
+    border-left: 5px solid #6f42c1;
+  }

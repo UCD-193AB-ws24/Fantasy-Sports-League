@@ -27,6 +27,8 @@ import ProfilePage from "./Profile";
 import LeaguesPage from './components/pages/LeaguePage';
 import CreateLeague from './components/pages/CreateLeague';
 import LeagueDetails from './components/pages/LeagueDetails';
+import DraftSetup from './components/pages/DraftSetup';
+import DraftBoard from './components/pages/DraftBoard';
 
 function App() {
   return (
@@ -139,6 +141,22 @@ function App() {
             <LeagueDetails />
           </ProtectedRoute>
         } />
+        <Route 
+    path="/leagues/:leagueId/draft/setup" 
+    element={
+      <ProtectedRoute>
+        <DraftSetup />
+      </ProtectedRoute>
+    } 
+  />
+        <Route 
+          path="/leagues/:leagueId/draft" 
+          element={
+            <ProtectedRoute>
+              <DraftBoard />
+            </ProtectedRoute>
+          } 
+        />
 
         </Routes>
       </Router>

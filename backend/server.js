@@ -11,6 +11,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import { exec } from 'child_process';
 import crypto from 'crypto';
+import { Server } from "socket.io";
 import { data } from 'react-router-dom';
 import { create } from 'domain';
 
@@ -18,6 +19,7 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = 5001;
+const draftTimers = {};
 
 app.use(cors({
   origin: 'http://localhost:5173', 
@@ -129,19 +131,16 @@ passport.deserializeUser(async (id, done) => {
 
 // Authentication middleware
 const authenticate = async (req, res, next) => {
-  // Get origin port for cookie name
-  const origin = req.headers.origin || '';
-  const portMatch = origin.match(/:(\d+)$/);
-  const port = portMatch ? portMatch[1] : '';
+  // Get the session ID from query parameters
+  const sessionId = req.query.sessionId || 'default';
   
-  // Try port-specific cookie first, then fall back to default
-  const cookieName = port ? `jwt_${port}` : 'jwt';
-  const token = req.cookies[cookieName] || req.cookies.jwt;
+  // Use sessionId in the cookie name
+  const cookieName = `jwt_${sessionId}`;
+  const token = req.cookies[cookieName];
 
   if (token) {
       try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
           const user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
           if (!user) {
@@ -180,6 +179,7 @@ app.get('/auth/google/callback',
 
 app.post('/login', async (req, res) => {
   const { name, password } = req.body;
+  const sessionId = req.query.sessionId || 'default';
 
   if (!name || !password) {
       return res.status(400).json({ error: "Name and password are required" });
@@ -206,13 +206,8 @@ app.post('/login', async (req, res) => {
       // Create JWT token
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-      // Get the origin port from request headers
-      const origin = req.headers.origin || '';
-      const portMatch = origin.match(/:(\d+)$/);
-      const port = portMatch ? portMatch[1] : '';
-      
-      // Set token as cookie with port-specific name
-      const cookieName = port ? `jwt_${port}` : 'jwt';
+      // Use the sessionId as part of the cookie name for isolation
+      const cookieName = `jwt_${sessionId}`;
       
       res.cookie(cookieName, token, {
           httpOnly: true,
@@ -247,22 +242,12 @@ app.get('/profile', authenticate, async (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  // Get origin port for cookie name
-  const origin = req.headers.origin || '';
-  const portMatch = origin.match(/:(\d+)$/);
-  const port = portMatch ? portMatch[1] : '';
+  const sessionId = req.query.sessionId || 'default';
   
-  // Clear the port-specific cookie
-  const cookieName = port ? `jwt_${port}` : 'jwt';
+  // Clear the session-specific cookie
+  const cookieName = `jwt_${sessionId}`;
   
   res.clearCookie(cookieName, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-  });
-  
-  // Also clear the default cookie for compatibility
-  res.clearCookie('jwt', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax'
@@ -1450,6 +1435,1288 @@ app.get('/api/roster/:userId/playerTeams', authenticate, async (req, res) => {
   } catch (error) {
     console.error("Error fetching player teams:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Set up or update draft settings
+app.post('/api/leagues/:leagueId/draft/setup', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    const userId = req.user.id;
+    const { draftDate, timePerPick, draftOrder, draftOrderList, allowDraftPickTrading } = req.body;
+    
+    // Check if user is commissioner
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    if (league.commissionerId !== userId.toString()) {
+      return res.status(403).json({ error: "Only the commissioner can set up the draft" });
+    }
+    
+    // Validate draft date
+    if (draftDate) {
+      const draftDateObj = new Date(draftDate);
+      const now = new Date();
+      
+      if (draftDateObj < now) {
+        return res.status(400).json({ error: "Draft date cannot be in the past" });
+      }
+    }
+    
+    // Create or update draft settings
+    let draft = await prisma.draft.findUnique({
+      where: { leagueId }
+    });
+    
+    const draftData = {
+      draftDate: draftDate ? new Date(draftDate) : null,
+      timePerPick: parseInt(timePerPick) || 90,
+      allowDraftPickTrading: allowDraftPickTrading === true,
+    };
+    
+    // If draft order is manual and we have an order list, save it
+    if (draftOrder === 'manual' && draftOrderList && draftOrderList.length > 0) {
+      draftData.draftOrderType = 'MANUAL';
+      draftData.manualDraftOrder = draftOrderList;
+    } else {
+      draftData.draftOrderType = 'RANDOM';
+      draftData.manualDraftOrder = [];
+    }
+    
+    if (draft) {
+      // Update existing draft
+      draft = await prisma.draft.update({
+        where: { id: draft.id },
+        data: draftData
+      });
+    } else {
+      // Create new draft
+      draft = await prisma.draft.create({
+        data: {
+          ...draftData,
+          leagueId,
+          status: 'NOT_STARTED'
+        }
+      });
+    }
+    
+    // Update league with draft date
+    await prisma.league.update({
+      where: { id: leagueId },
+      data: {
+        draftDate: draftDate ? new Date(draftDate) : null
+      }
+    });
+    
+    res.json({ success: true, draft });
+  } catch (error) {
+    console.error("Error setting up draft:", error);
+    res.status(500).json({ error: "Failed to set up draft" });
+  }
+});
+
+// Get draft status and info
+app.get('/api/leagues/:leagueId/draft', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    
+    // Get draft info
+    let draft = await prisma.draft.findUnique({
+      where: { leagueId },
+      include: {
+        picks: {
+          orderBy: { pickNumber: 'asc' },
+          include: { player: true }
+        }
+      }
+    });
+    
+    // If no draft exists yet, return default state
+    if (!draft) {
+      return res.json({
+        status: 'not_started',
+        currentRound: 0,
+        currentPick: 0,
+        currentTeam: null,
+        pickTimeRemaining: 0,
+        draftOrder: [],
+        picks: []
+      });
+    }
+    
+    // Get league teams
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: { users: true }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    // Format draft data for frontend
+    const formattedDraft = {
+      status: draft.status === 'IN_PROGRESS' ? 'in_progress' : 
+              draft.status === 'COMPLETED' ? 'completed' : 'not_started',
+      currentRound: draft.currentRound || 0,
+      currentPick: draft.currentPickInRound || 0,
+      pickTimeRemaining: draft.pickTimeRemaining || draft.timePerPick || 90,
+      picks: draft.picks.map(pick => ({
+        pickNumber: pick.pickNumber,
+        round: pick.round,
+        pickInRound: pick.pickInRound,
+        teamId: pick.userId,
+        teamName: league.users.find(u => u.id === pick.userId)?.teamName || 
+                 `Team ${league.users.find(u => u.id === pick.userId)?.name || 'Unknown'}`,
+        playerId: pick.playerId,
+        playerName: pick.player.name,
+        timestamp: pick.timestamp
+      }))
+    };
+    
+    // Calculate draft order if in progress or completed
+    if (draft.status !== 'NOT_STARTED') {
+      // Get the draft order
+      let draftOrder = [];
+      
+      if (draft.draftOrderType === 'MANUAL' && draft.manualDraftOrder && draft.manualDraftOrder.length > 0) {
+        // Use manual draft order
+        draftOrder = draft.manualDraftOrder.map(userId => {
+          const user = league.users.find(u => u.id === userId);
+          return {
+            userId,
+            teamName: user?.teamName || `Team ${user?.name || 'Unknown'}`
+          };
+        });
+      } else {
+        // For random order, get the order from the first round picks
+        const firstRoundPicks = draft.picks.filter(pick => pick.round === 1);
+        draftOrder = firstRoundPicks.map(pick => {
+          const user = league.users.find(u => u.id === pick.userId);
+          return {
+            userId: pick.userId,
+            teamName: user?.teamName || `Team ${user?.name || 'Unknown'}`
+          };
+        });
+      }
+      
+      formattedDraft.draftOrder = draftOrder;
+      
+      // Set current team if draft is in progress
+      if (draft.status === 'IN_PROGRESS') {
+        // In a snake draft, odd-numbered rounds go in order, even-numbered rounds go in reverse
+        let currentIndex;
+        if (draft.currentRound % 2 === 1) {
+          // Odd round - normal order
+          currentIndex = draft.currentPickInRound - 1;
+        } else {
+          // Even round - reverse order
+          currentIndex = draftOrder.length - draft.currentPickInRound;
+        }
+        
+        formattedDraft.currentTeam = draftOrder[currentIndex];
+      }
+    } else {
+      formattedDraft.draftOrder = [];
+    }
+    
+    res.json(formattedDraft);
+  } catch (error) {
+    console.error("Error getting draft info:", error);
+    res.status(500).json({ error: "Failed to get draft info" });
+  }
+});
+
+// Start the draft
+app.post('/api/leagues/:leagueId/draft/start', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    const userId = req.user.id;
+    
+    console.log(`Starting draft for league ${leagueId} by user ${userId}`);
+    
+    // Check if user is commissioner
+    let league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: { users: true }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    if (league.commissionerId !== userId.toString()) {
+      return res.status(403).json({ error: "Only the commissioner can start the draft" });
+    }
+    
+    // Get draft record
+    let draft = await prisma.draft.findUnique({ 
+      where: { leagueId },
+      include: { picks: true }
+    });
+    
+    if (!draft) {
+      return res.status(400).json({ error: "Draft has not been set up yet" });
+    }
+    
+    if (draft.status === 'IN_PROGRESS') {
+      return res.status(400).json({ error: "Draft is already in progress" });
+    }
+    
+    if (draft.status === 'COMPLETED') {
+      return res.status(400).json({ error: "Draft is already completed" });
+    }
+    
+    // Reset any existing picks that might have been created accidentally
+    if (draft.picks && draft.picks.length > 0) {
+      console.log(`Clearing ${draft.picks.length} existing picks before starting draft`);
+      await prisma.draftPick.deleteMany({
+        where: { draftId: draft.id }
+      });
+    }
+    
+    // Make sure the league has the correct number of teams by adding bots if needed
+    if (league.users.length < league.maxTeams) {
+      console.log(`Adding ${league.maxTeams - league.users.length} bots to league ${leagueId}`);
+      const botsNeeded = league.maxTeams - league.users.length;
+      
+      for (let i = 1; i <= botsNeeded; i++) {
+        const botName = `Bot${i}`;
+        const botEmail = `bot${i}_league${leagueId}@bot.com`;
+        
+        // First check if this bot already exists
+        let botUser = await prisma.user.findFirst({
+          where: { email: botEmail }
+        });
+        
+        if (!botUser) {
+          // Create new bot user with hashed password
+          const dummyPassword = await bcrypt.hash(crypto.randomBytes(16).toString("hex"), 10);
+          
+          botUser = await prisma.user.create({
+            data: {
+              name: botName,
+              email: botEmail,
+              password: dummyPassword,
+              teamName: `Bot Team ${i}`,
+              createdAt: new Date()
+            }
+          });
+          
+          console.log(`Created bot user ${botName} with ID ${botUser.id}`);
+        } else {
+          console.log(`Bot user ${botName} already exists with ID ${botUser.id}`);
+        }
+        
+        // Check if this bot is already connected to the league
+        const botInLeague = await prisma.league.findFirst({
+          where: { 
+            id: leagueId,
+            users: {
+              some: { id: botUser.id }
+            }
+          }
+        });
+        
+        if (!botInLeague) {
+          // Connect the bot to the league
+          await prisma.league.update({
+            where: { id: leagueId },
+            data: {
+              users: {
+                connect: { id: botUser.id }
+              }
+            }
+          });
+          
+          console.log(`Connected bot ${botName} (ID: ${botUser.id}) to league ${leagueId}`);
+        }
+      }
+      
+      // Reload league with newly added bots
+      league = await prisma.league.findUnique({
+        where: { id: leagueId },
+        include: { users: true }
+      });
+      
+      console.log(`League now has ${league.users.length} users`);
+    }
+    
+    // Generate draft order based on settings
+    let draftOrder = [];
+    
+    if (draft.draftOrderType === 'MANUAL' && draft.manualDraftOrder && draft.manualDraftOrder.length > 0) {
+      // Use provided manual draft order
+      draftOrder = draft.manualDraftOrder;
+    } else {
+      // Randomize order for all teams (including bots)
+      const userIds = league.users.map(u => u.id);
+      
+      // Shuffle user IDs
+      for (let i = userIds.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [userIds[i], userIds[j]] = [userIds[j], userIds[i]];
+      }
+      
+      draftOrder = userIds;
+    }
+    
+    console.log(`Draft order: ${JSON.stringify(draftOrder)}`);
+    
+    // Update draft
+    draft = await prisma.draft.update({
+      where: { id: draft.id },
+      data: {
+        status: 'IN_PROGRESS',
+        currentRound: 1,
+        currentPickInRound: 1,
+        pickTimeRemaining: draft.timePerPick || 90,
+        draftOrder: draftOrder
+      }
+    });
+    
+    // Broadcast draft started
+    io.to(`draft-${leagueId}`).emit('draft-started', {
+      draftId: draft.id,
+      status: 'in_progress',
+      draftOrder: draftOrder.map(userId => {
+        const user = league.users.find(u => u.id === userId);
+        return {
+          userId,
+          teamName: user?.teamName || `Team ${user?.name || 'Unknown'}`
+        };
+      })
+    });
+    
+    // Start the timer for the first pick
+    startDraftTimer(leagueId, draft.id);
+    
+    // IMPORTANT: Don't trigger auto-pick right away for the first user, even if it's a bot
+    // We'll let the timer handle triggering auto-pick for bots
+    
+    return res.json({ 
+      success: true, 
+      draft,
+      message: "Draft started successfully" 
+    });
+  } catch (error) {
+    console.error("Error starting draft:", error);
+    return res.status(500).json({ error: `Failed to start draft: ${error.message}` });
+  }
+});
+
+// Make a draft pick
+app.post('/api/leagues/:leagueId/draft/pick', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    const userId = req.user.id;
+    const { playerId } = req.body;
+    
+    console.log(`User ${userId} attempting to draft player ${playerId} for league ${leagueId}`);
+    
+    if (!playerId) {
+      return res.status(400).json({ error: "Player ID is required" });
+    }
+    
+    // Get current draft state
+    const draft = await prisma.draft.findUnique({ 
+      where: { leagueId },
+      include: { picks: true }
+    });
+    
+    if (!draft) {
+      return res.status(404).json({ error: "Draft not found" });
+    }
+    
+    if (draft.status !== 'IN_PROGRESS') {
+      return res.status(400).json({ error: "Draft is not in progress" });
+    }
+    
+    // Determine whose turn it is
+    const draftOrder = draft.draftOrder;
+    
+    if (!draftOrder || draftOrder.length === 0) {
+      return res.status(400).json({ error: "Draft order not established" });
+    }
+    
+    let currentTeamIndex;
+    if (draft.currentRound % 2 === 1) {
+      // Odd round: normal order
+      currentTeamIndex = draft.currentPickInRound - 1;
+    } else {
+      // Even round: reverse order
+      currentTeamIndex = draftOrder.length - draft.currentPickInRound;
+    }
+    
+    if (currentTeamIndex < 0 || currentTeamIndex >= draftOrder.length) {
+      return res.status(400).json({ error: "Invalid draft position" });
+    }
+    
+    const currentTeamId = draftOrder[currentTeamIndex];
+    
+    console.log(`Current team to pick: ${currentTeamId}, requesting user: ${userId}`);
+    
+    // Check if it's this user's turn
+    if (currentTeamId !== userId) {
+      return res.status(403).json({ error: "It's not your turn to pick" });
+    }
+    
+    // Check if player is already drafted
+    const existingPick = draft.picks.find(pick => pick.playerId === parseInt(playerId));
+    
+    if (existingPick) {
+      return res.status(400).json({ error: "This player has already been drafted" });
+    }
+    
+    // Fetch the player
+    const player = await prisma.player.findUnique({
+      where: { id: parseInt(playerId) }
+    });
+    
+    if (!player) {
+      return res.status(404).json({ error: "Player not found" });
+    }
+    
+    // Create the pick - NOTE: Check for existing pick with same pickNumber first
+    const totalPicks = (draft.currentRound - 1) * draftOrder.length + draft.currentPickInRound;
+    
+    // Check if a pick with this pick number already exists
+    const existingPickNumber = await prisma.draftPick.findUnique({
+      where: {
+        draftId_pickNumber: {
+          draftId: draft.id,
+          pickNumber: totalPicks
+        }
+      }
+    });
+    
+    if (existingPickNumber) {
+      return res.status(409).json({ error: "This pick number has already been used" });
+    }
+    
+    const pick = await prisma.draftPick.create({
+      data: {
+        draftId: draft.id,
+        userId,
+        playerId: parseInt(playerId),
+        round: draft.currentRound,
+        pickInRound: draft.currentPickInRound,
+        pickNumber: totalPicks,
+        timestamp: new Date()
+      }
+    });
+    
+    // Find or create team roster for this league
+    let teamRoster = await prisma.roster.findFirst({
+      where: { 
+        userId,
+        leagueId: parseInt(leagueId) // Make sure we get the league-specific roster
+      }
+    });
+    
+    if (!teamRoster) {
+      // Create a new roster for this user in this league
+      teamRoster = await prisma.roster.create({
+        data: {
+          userId,
+          leagueId: parseInt(leagueId),
+          teamName: `Team ${userId}`,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+    }
+    
+    // Add player to roster
+    await prisma.rosterPlayer.create({
+      data: {
+        rosterId: teamRoster.id,
+        playerId: parseInt(playerId),
+        position: player.positions?.[0] || "Bench",
+        isBench: true,
+        createdAt: new Date()
+      }
+    });
+    
+    // Move to next pick
+    let nextRound = draft.currentRound;
+    let nextPickInRound = draft.currentPickInRound + 1;
+    let nextStatus = 'IN_PROGRESS';
+    
+    // Check if we've reached the end of the round
+    if (nextPickInRound > draftOrder.length) {
+      nextRound += 1;
+      nextPickInRound = 1;
+      
+      // Check if we've completed all rounds
+      if (nextRound > 15) {
+        nextStatus = 'COMPLETED';
+      }
+    }
+    
+    // Update draft state
+    await prisma.draft.update({
+      where: { id: draft.id },
+      data: {
+        currentRound: nextRound,
+        currentPickInRound: nextPickInRound,
+        pickTimeRemaining: draft.timePerPick,
+        status: nextStatus
+      }
+    });
+    
+    // Get team info
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: { users: true }
+    });
+    
+    const pickingUser = league.users.find(u => u.id === userId);
+    
+    // Broadcast pick
+    io.to(`draft-${leagueId}`).emit('pick-made', {
+      pickNumber: totalPicks,
+      round: draft.currentRound,
+      pickInRound: draft.currentPickInRound,
+      teamId: userId,
+      teamName: pickingUser?.teamName || `Team ${pickingUser?.name || 'Unknown'}`,
+      playerId: parseInt(playerId),
+      playerName: player.name,
+      timestamp: new Date()
+    });
+    
+    // Check if next team is a bot
+    if (nextStatus === 'IN_PROGRESS') {
+      let nextTeamIndex;
+      if (nextRound % 2 === 1) {
+        nextTeamIndex = nextPickInRound - 1;
+      } else {
+        nextTeamIndex = draftOrder.length - nextPickInRound;
+      }
+      
+      const nextTeamId = draftOrder[nextTeamIndex];
+      const nextTeamUser = league.users.find(u => u.id === nextTeamId);
+      
+      if (nextTeamUser && nextTeamUser.email?.endsWith('@bot.com')) {
+        // Auto-pick for bot after small delay
+        setTimeout(() => {
+          handleAutoPick(leagueId, draft.id);
+        }, 2000);
+      } else {
+        // Start timer for next pick
+        startDraftTimer(leagueId, draft.id);
+      }
+    } else if (nextStatus === 'COMPLETED') {
+      // Update league status
+      await prisma.league.update({
+        where: { id: leagueId },
+        data: { draftCompleted: true }
+      });
+      
+      // Broadcast completion
+      io.to(`draft-${leagueId}`).emit('draft-completed');
+    }
+    
+    return res.json({ 
+      success: true,
+      pick,
+      message: `Successfully drafted ${player.name}`
+    });
+  } catch (error) {
+    console.error("Error making draft pick:", error);
+    return res.status(500).json({ error: `Failed to make draft pick: ${error.message}` });
+  }
+});
+
+// Auto pick for a team
+app.post('/api/leagues/:leagueId/draft/autopick', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    const userId = req.user.id;
+    
+    // Get draft
+    const draft = await prisma.draft.findUnique({
+      where: { leagueId }
+    });
+    
+    if (!draft) {
+      return res.status(404).json({ error: "Draft not found" });
+    }
+    
+    if (draft.status !== 'IN_PROGRESS') {
+      return res.status(400).json({ error: "Draft is not in progress" });
+    }
+    
+    // Check if it's the user's turn
+    const draftOrder = draft.draftOrder;
+    
+    let currentTeamIndex;
+    if (draft.currentRound % 2 === 1) {
+      // Odd round - normal order
+      currentTeamIndex = draft.currentPickInRound - 1;
+    } else {
+      // Even round - reverse order
+      currentTeamIndex = draftOrder.length - draft.currentPickInRound;
+    }
+    
+    if (draftOrder[currentTeamIndex] !== userId) {
+      return res.status(403).json({ error: "It's not your turn to pick" });
+    }
+    
+    // Get already drafted players
+    const draftedPlayers = await prisma.draftPick.findMany({
+      where: { draftId: draft.id },
+      select: { playerId: true }
+    });
+    
+    const draftedPlayerIds = draftedPlayers.map(p => p.playerId);
+    
+    // Get best available player by rank
+    const bestPlayer = await prisma.player.findFirst({
+      where: {
+        id: { notIn: draftedPlayerIds }
+      },
+      orderBy: { rank: 'asc' }
+    });
+    
+    if (!bestPlayer) {
+      return res.status(404).json({ error: "No available players found" });
+    }
+    
+    // Make the pick using the existing endpoint
+    req.body.playerId = bestPlayer.id;
+    return await handleDraftPick(req, res);
+  } catch (error) {
+    console.error("Error making auto pick:", error);
+    res.status(500).json({ error: "Failed to make auto pick" });
+  }
+});
+
+// Get team rosters with drafted players
+app.get('/api/leagues/:leagueId/teams', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    
+    // Get league with users
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: { users: true }
+    });
+    
+    if (!league) {
+      return res.status(404).json({ error: "League not found" });
+    }
+    
+    // Get draft
+    const draft = await prisma.draft.findUnique({
+      where: { leagueId },
+      include: {
+        picks: {
+          include: { player: true }
+        }
+      }
+    });
+    
+    // Build team roster data
+    const teams = [];
+    
+    for (const user of league.users) {
+      // Get all picks by this user
+      const userPicks = draft ? draft.picks.filter(pick => pick.userId === user.id) : [];
+      
+      // Map picks to players
+      const players = userPicks.map(pick => ({
+        id: pick.player.id,
+        name: pick.player.name,
+        team: pick.player.team,
+        positions: pick.player.positions,
+        pickRound: pick.round,
+        pickNumber: pick.pickNumber
+      }));
+      
+      teams.push({
+        userId: user.id,
+        name: user.name,
+        teamName: user.teamName || `Team ${user.name}`,
+        players
+      });
+    }
+    
+    res.json(teams);
+  } catch (error) {
+    console.error("Error getting team rosters:", error);
+    res.status(500).json({ error: "Failed to get team rosters" });
+  }
+});
+
+// ================= SOCKET.IO HANDLERS =================
+
+// Initialize Socket.IO after the WebSocket server is set up
+const io = new Server(wss.server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Set up Socket.IO event handlers
+io.on("connection", (socket) => {
+  console.log("New Socket.IO connection:", socket.id);
+  
+  // Join draft room
+  socket.on('join-draft', ({ leagueId }) => {
+    socket.join(`draft-${leagueId}`);
+    console.log(`Socket ${socket.id} joined draft room for league ${leagueId}`);
+  });
+  
+  // Leave draft room
+  socket.on('leave-draft', ({ leagueId }) => {
+    socket.leave(`draft-${leagueId}`);
+    console.log(`Socket ${socket.id} left draft room for league ${leagueId}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log("Socket disconnected:", socket.id);
+  });
+});
+
+
+
+// Draft timer function
+// Draft timer function
+async function startDraftTimer(leagueId, draftId) {
+  try {
+    // Get current draft state
+    const draft = await prisma.draft.findUnique({
+      where: { id: draftId }
+    });
+    
+    if (!draft || draft.status !== 'IN_PROGRESS') {
+      console.log(`Timer not started: draft ${draftId} is not in progress`);
+      return;
+    }
+    
+    // Reset the timer to the full time
+    await prisma.draft.update({
+      where: { id: draftId },
+      data: { pickTimeRemaining: draft.timePerPick || 90 }
+    });
+    
+    // Broadcast draft update
+    await broadcastDraftUpdate(leagueId);
+    
+    // Clear any existing timer for this league
+    if (draftTimers[leagueId]) {
+      clearInterval(draftTimers[leagueId]);
+      delete draftTimers[leagueId];
+    }
+    
+    // Check if it's a bot's turn
+    const draftOrder = draft.draftOrder;
+    
+    if (!draftOrder || draftOrder.length === 0) return;
+    
+    let currentTeamIndex;
+    if (draft.currentRound % 2 === 1) {
+      // Odd round: normal order
+      currentTeamIndex = draft.currentPickInRound - 1;
+    } else {
+      // Even round: reverse order
+      currentTeamIndex = draftOrder.length - draft.currentPickInRound;
+    }
+    
+    if (currentTeamIndex < 0 || currentTeamIndex >= draftOrder.length) return;
+    
+    const currentTeamId = draftOrder[currentTeamIndex];
+    
+    // Get league and user details
+    const league = await prisma.league.findUnique({
+      where: { id: parseInt(leagueId) },
+      include: { users: true }
+    });
+    
+    if (!league) return;
+    
+    const currentUser = league.users.find(u => u.id === currentTeamId);
+    
+    if (currentUser && currentUser.email?.endsWith('@bot.com')) {
+      // It's a bot's turn, trigger auto-pick after a delay
+      console.log(`Bot ${currentUser.name} is up. Triggering auto-pick...`);
+      setTimeout(() => {
+        handleAutoPick(leagueId, draftId);
+      }, 3000);
+      return;
+    }
+    
+    // Start countdown timer for human player
+    console.log(`Starting timer for league ${leagueId}, draft ${draftId}`);
+    draftTimers[leagueId] = setInterval(async () => {
+      try {
+        // Get latest draft state
+        const currentDraft = await prisma.draft.findUnique({
+          where: { id: draftId }
+        });
+        
+        if (!currentDraft || currentDraft.status !== 'IN_PROGRESS') {
+          clearInterval(draftTimers[leagueId]);
+          delete draftTimers[leagueId];
+          return;
+        }
+        
+        // Decrease remaining time
+        const newTimeRemaining = Math.max(0, currentDraft.pickTimeRemaining - 1);
+        
+        // Update draft state
+        await prisma.draft.update({
+          where: { id: draftId },
+          data: { pickTimeRemaining: newTimeRemaining }
+        });
+        
+        // Broadcast updated timer
+        await broadcastDraftUpdate(leagueId);
+        
+        // Auto-pick when timer reaches 0
+        if (newTimeRemaining === 0) {
+          clearInterval(draftTimers[leagueId]);
+          delete draftTimers[leagueId];
+          
+          // Handle auto-pick after a short delay
+          setTimeout(() => {
+            handleAutoPick(leagueId, draftId);
+          }, 1000);
+        }
+      } catch (error) {
+        console.error("Error in draft timer interval:", error);
+        clearInterval(draftTimers[leagueId]);
+        delete draftTimers[leagueId];
+      }
+    }, 1000);
+  } catch (error) {
+    console.error("Error starting draft timer:", error);
+  }
+}
+
+// Broadcast draft update
+async function broadcastDraftUpdate(leagueId) {
+  try {
+    // Get latest draft state
+    const draft = await prisma.draft.findUnique({
+      where: { leagueId },
+      include: {
+        picks: {
+          orderBy: { pickNumber: 'asc' },
+          include: { player: true }
+        }
+      }
+    });
+    
+    if (!draft) return;
+    
+    // Get league users
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: { users: true }
+    });
+    
+    if (!league) return;
+    
+    // Format draft data (similar to the GET endpoint)
+    const formattedDraft = {
+      status: draft.status === 'IN_PROGRESS' ? 'in_progress' : 
+              draft.status === 'COMPLETED' ? 'completed' : 'not_started',
+      currentRound: draft.currentRound || 0,
+      currentPick: draft.currentPickInRound || 0,
+      pickTimeRemaining: draft.pickTimeRemaining || draft.timePerPick || 90,
+      picks: draft.picks.map(pick => ({
+        pickNumber: pick.pickNumber,
+        round: pick.round,
+        pickInRound: pick.pickInRound,
+        teamId: pick.userId,
+        teamName: league.users.find(u => u.id === pick.userId)?.teamName || 
+                 `Team ${league.users.find(u => u.id === pick.userId)?.name || 'Unknown'}`,
+        playerId: pick.playerId,
+        playerName: pick.player.name,
+        timestamp: pick.timestamp
+      }))
+    };
+    
+    // Calculate draft order
+    if (draft.status !== 'NOT_STARTED') {
+      // Get the draft order
+      let draftOrder = [];
+      
+      if (draft.draftOrderType === 'MANUAL' && draft.manualDraftOrder && draft.manualDraftOrder.length > 0) {
+        // Use manual draft order
+        draftOrder = draft.manualDraftOrder.map(userId => {
+          const user = league.users.find(u => u.id === userId);
+          return {
+            userId,
+            teamName: user?.teamName || `Team ${user?.name || 'Unknown'}`
+          };
+        });
+      } else {
+        // For random order, use the stored draft order
+        draftOrder = draft.draftOrder.map(userId => {
+          const user = league.users.find(u => u.id === userId);
+          return {
+            userId,
+            teamName: user?.teamName || `Team ${user?.name || 'Unknown'}`
+          };
+        });
+      }
+      
+      formattedDraft.draftOrder = draftOrder;
+      
+      // Set current team if draft is in progress
+      if (draft.status === 'IN_PROGRESS') {
+        // In a snake draft, odd-numbered rounds go in order, even-numbered rounds go in reverse
+        let currentIndex;
+        if (draft.currentRound % 2 === 1) {
+          // Odd round - normal order
+          currentIndex = draft.currentPickInRound - 1;
+        } else {
+          // Even round - reverse order
+          currentIndex = draftOrder.length - draft.currentPickInRound;
+        }
+        
+        formattedDraft.currentTeam = draftOrder[currentIndex];
+      }
+    } else {
+      formattedDraft.draftOrder = [];
+    }
+    
+    // Broadcast update
+    io.to(`draft-${leagueId}`).emit('draft-update', formattedDraft);
+  } catch (error) {
+    console.error("Error broadcasting draft update:", error);
+  }
+}
+
+// Handle auto pick when timer reaches 0
+async function handleAutoPick(leagueId, draftId) {
+  try {
+    console.log(`Auto-picking for league ${leagueId}, draft ${draftId}`);
+    
+    // Get current draft state
+    const draft = await prisma.draft.findUnique({
+      where: { id: draftId },
+      include: { picks: true }
+    });
+    
+    if (!draft || draft.status !== 'IN_PROGRESS') {
+      console.log("Cannot auto-pick: draft not in progress");
+      return;
+    }
+    
+    // Determine which team (userId) is up
+    const draftOrder = draft.draftOrder;
+    
+    if (!draftOrder || draftOrder.length === 0) {
+      console.log("Cannot auto-pick: draft order not established");
+      return;
+    }
+    
+    let currentTeamIndex;
+    if (draft.currentRound % 2 === 1) {
+      // Odd round - normal order
+      currentTeamIndex = draft.currentPickInRound - 1;
+    } else {
+      // Even round - reverse order
+      currentTeamIndex = draftOrder.length - draft.currentPickInRound;
+    }
+    
+    if (currentTeamIndex < 0 || currentTeamIndex >= draftOrder.length) {
+      console.log("Cannot auto-pick: invalid draft position");
+      return;
+    }
+    
+    const currentTeamId = draftOrder[currentTeamIndex];
+    console.log(`Auto-picking for team ${currentTeamId} (index ${currentTeamIndex})`);
+    
+    // Find already drafted players
+    const draftedPlayerIds = draft.picks.map(p => p.playerId);
+    console.log(`${draftedPlayerIds.length} players already drafted`);
+    
+    // Get best available player by rank
+    const bestPlayer = await prisma.player.findFirst({
+      where: {
+        id: { notIn: draftedPlayerIds.length > 0 ? draftedPlayerIds : [-1] }
+      },
+      orderBy: { rank: 'asc' }
+    });
+    
+    if (!bestPlayer) {
+      console.error("No available players found for auto-pick");
+      return;
+    }
+    
+    // Check for existing pick with same pickNumber
+    const totalPicks = (draft.currentRound - 1) * draftOrder.length + draft.currentPickInRound;
+    
+    const existingPickNumber = await prisma.draftPick.findUnique({
+      where: {
+        draftId_pickNumber: {
+          draftId: draft.id,
+          pickNumber: totalPicks
+        }
+      }
+    });
+    
+    if (existingPickNumber) {
+      console.error(`Pick number ${totalPicks} already exists. Skipping duplicate pick.`);
+      
+      // Move to next pick
+      let nextRound = draft.currentRound;
+      let nextPickInRound = draft.currentPickInRound + 1;
+      let nextStatus = 'IN_PROGRESS';
+      
+      // Check if we've reached the end of the round
+      if (nextPickInRound > draftOrder.length) {
+        nextRound += 1;
+        nextPickInRound = 1;
+        
+        if (nextRound > 15) {
+          nextStatus = 'COMPLETED';
+        }
+      }
+      
+      // Update draft state
+      await prisma.draft.update({
+        where: { id: draft.id },
+        data: {
+          currentRound: nextRound,
+          currentPickInRound: nextPickInRound,
+          pickTimeRemaining: draft.timePerPick,
+          status: nextStatus
+        }
+      });
+      
+      // Start timer for next pick
+      startDraftTimer(leagueId, draft.id);
+      return;
+    }
+    
+    // Create the pick
+    const pick = await prisma.draftPick.create({
+      data: {
+        draftId: draft.id,
+        userId: currentTeamId,
+        playerId: bestPlayer.id,
+        round: draft.currentRound,
+        pickInRound: draft.currentPickInRound,
+        pickNumber: totalPicks,
+        timestamp: new Date()
+      }
+    });
+    
+    // Find or create roster for this team in this league
+    let teamRoster = await prisma.roster.findFirst({
+      where: { 
+        userId: currentTeamId,
+        leagueId: parseInt(leagueId)
+      }
+    });
+    
+    if (!teamRoster) {
+      // Create a new roster for this team in this league
+      teamRoster = await prisma.roster.create({
+        data: {
+          userId: currentTeamId,
+          leagueId: parseInt(leagueId),
+          teamName: `Team ${currentTeamId}`,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+    }
+    
+    // Add player to roster
+    await prisma.rosterPlayer.create({
+      data: {
+        rosterId: teamRoster.id,
+        playerId: bestPlayer.id,
+        position: bestPlayer.positions?.[0] || "Bench",
+        isBench: true,
+        createdAt: new Date()
+      }
+    });
+    
+    // Move to next pick
+    let nextRound = draft.currentRound;
+    let nextPickInRound = draft.currentPickInRound + 1;
+    let nextStatus = 'IN_PROGRESS';
+    
+    // Check if we've reached the end of the round
+    if (nextPickInRound > draftOrder.length) {
+      nextRound += 1;
+      nextPickInRound = 1;
+      
+      if (nextRound > 15) {
+        nextStatus = 'COMPLETED';
+      }
+    }
+    
+    // Update draft state
+    await prisma.draft.update({
+      where: { id: draft.id },
+      data: {
+        currentRound: nextRound,
+        currentPickInRound: nextPickInRound,
+        pickTimeRemaining: draft.timePerPick,
+        status: nextStatus
+      }
+    });
+    
+    // Get league teams
+    const league = await prisma.league.findUnique({
+      where: { id: parseInt(leagueId) },
+      include: { users: true }
+    });
+    
+    const botUser = league.users.find(u => u.id === currentTeamId);
+    
+    // Broadcast pick
+    io.to(`draft-${leagueId}`).emit('pick-made', {
+      pickNumber: totalPicks,
+      round: draft.currentRound,
+      pickInRound: draft.currentPickInRound,
+      teamId: currentTeamId,
+      teamName: botUser?.teamName || `Team ${botUser?.name || 'Unknown'}`,
+      playerId: bestPlayer.id,
+      playerName: bestPlayer.name,
+      timestamp: new Date()
+    });
+    
+    // Check if draft completed
+    if (nextStatus === 'COMPLETED') {
+      // Update league status
+      await prisma.league.update({
+        where: { id: parseInt(leagueId) },
+        data: { draftCompleted: true }
+      });
+      
+      // Broadcast completion
+      io.to(`draft-${leagueId}`).emit('draft-completed');
+    } else {
+      // Check if next team is a bot
+      let nextTeamIndex;
+      if (nextRound % 2 === 1) {
+        nextTeamIndex = nextPickInRound - 1;
+      } else {
+        nextTeamIndex = draftOrder.length - nextPickInRound;
+      }
+      
+      const nextTeamId = draftOrder[nextTeamIndex];
+      const nextTeamUser = league.users.find(u => u.id === nextTeamId);
+      
+      if (nextTeamUser && nextTeamUser.email?.endsWith('@bot.com')) {
+        // Auto-pick for bot after small delay
+        setTimeout(() => {
+          handleAutoPick(leagueId, draft.id);
+        }, 2000);
+      } else {
+        // Start timer for next pick
+        await broadcastDraftUpdate(leagueId);
+        startDraftTimer(leagueId, draft.id);
+      }
+    }
+  } catch (error) {
+    console.error("Error handling auto-pick:", error);
+  }
+}
+
+app.get('/api/players', async (req, res) => {
+  try {
+    const players = await prisma.player.findMany({
+      orderBy: { rank: 'asc' },
+      take: 500
+    });
+    
+    if (!players || players.length === 0) {
+      console.error("No players found in database");
+      return res.status(404).json({ error: "No players found" });
+    }
+    
+    console.log(`Returning ${players.length} players`);
+    res.json(players);
+  } catch (error) {
+    console.error("Error fetching players:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get('/api/players', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 500;
+    const sortKey = req.query.sortKey || 'rank';
+    const sortDirection = req.query.sortDirection || 'asc';
+    
+    const players = await prisma.player.findMany({
+      take: limit,
+      orderBy: { [sortKey]: sortDirection }
+    });
+    
+    console.log(`Returning ${players.length} players`);
+    res.json(players);
+  } catch (error) {
+    console.error("Error fetching players:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Draft debug endpoint
+app.get('/api/leagues/:leagueId/draft/debug', authenticate, async (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    
+    // Get league info
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      include: { 
+        users: true
+      }
+    });
+    
+    // Get draft info
+    const draft = await prisma.draft.findUnique({
+      where: { leagueId },
+      include: {
+        picks: true
+      }
+    });
+    
+    // Get player count
+    const playerCount = await prisma.player.count();
+    
+    // Return debug info
+    res.json({
+      league: {
+        id: league.id,
+        name: league.name,
+        userCount: league.users.length,
+        maxTeams: league.maxTeams,
+        users: league.users.map(u => ({ id: u.id, name: u.name, teamName: u.teamName }))
+      },
+      draft: draft ? {
+        id: draft.id,
+        status: draft.status,
+        currentRound: draft.currentRound,
+        currentPickInRound: draft.currentPickInRound,
+        draftOrderType: draft.draftOrderType,
+        draftOrderLength: draft.draftOrder?.length || 0,
+        picksCount: draft.picks?.length || 0
+      } : null,
+      playerCount
+    });
+  } catch (error) {
+    console.error("Debug error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
