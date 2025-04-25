@@ -25,6 +25,56 @@ const initialTeamSlots = [
   { id: 12, label: "IL-2",   player: null },
   { id: 13, label: "IL-3",   player: null },
 ];
+const players = [
+  { name: "Hawks", img:"hawks-logo.jpg", palette1:'#C8102E', palette2: '#FDB927'},
+  { name: "Celtics", img: "alt.png", palette1:'#007A33', palette2: '#BA9653'},
+  { name: "Nets", img: "alt.png", palette1:'#000000', palette2: '#FFFFFF'},
+  { name: "Hornets", img: "alt.png", palette1:'#1d1160', palette2: '#00788C'},
+  { name: "Bulls", img: "alt.png", palette1:'#CE1141', palette2: '#000000'},
+  { name: "Cavaliers", img: "alt.png", palette1:'#860038', palette2: '#FDBB30'},
+  { name: "Mavericks", img: "alt.png", palette1:'#002B5e', palette2: '#00538C'},
+  { name: "Nuggets", img: "alt.png", palette1: '#0E2240', palette2: '#FEC524'},
+  { name: "Pistons", img: "alt.png", palette1: '#C8102E', palette2: '#1d42ba'},
+  { name: "Warriors", img: "alt.png", palette1:'#1D428A', palette2: '#ffc72c'},
+  { name: "Rockets", img: "alt.png", palette1:'#000000', palette2: '#CE1141'},
+  { name: "Pacers", img: "alt.png", palette1:'#002D62', palette2: '#FDBB30'},
+  { name: "Clippers", img: "alt.png", palette1:'#c8102E', palette2: '#1d428a'},
+  { name: "Lakers", img: "lakers-logo.png", palette1:'#552583', palette2: '#FDB927'},
+  { name: "Grizzlies", img: "Memphis-Grizzlies-Emblem.png", palette2:'#12173F', palette1: '#5D76A9'},
+  { name: "Heat", img: "alt.png", palette2:'#98002E', palette1: '#F9A01B'},
+  { name: "Bucks", img: "alt.png", palette2:'#00471B', palette1: '#EEE1C6'},
+  { name: "Timberwolves", img: "alt.png", palette1:'#0C2340', palette2: '#236192'},
+  { name: "Pelicans", img: "alt.png", palette1:'#C8102E', palette2: '#0C2340'},
+  { name: "Knicks", img: "alt.png", palette1:'#006BB6', palette2: '#F58426'},
+  { name: "Thunder", img: "alt.png", palette1:'#007ac1', palette2: '#ef3b24'},
+  { name: "Magic", img: "alt.png", palette1:'#0077c0', palette2: '#C4ced4'},
+  { name: "76ers", img: "alt.png", palette1:'#ed174c', palette2: '#006bb6'},
+  { name: "Suns", img: "alt.png", palette1:'#1d1160', palette2: '#e56020'},
+  { name: "Blazers", img: "alt.png", palette1:'#000000', palette2: '#E03A3E'},
+  { name: "Kings", img: "alt.png", palette1:'#5a2d81', palette2: '#63727A'},
+  { name: "Spurs", img: "alt.png", palette1:'#000000', palette2: '#c4ced4'},
+  { name: "Raptors", img: "alt.png", palette1:'#000000', palette2: '#ce1141'},
+  { name: "Jazz", img: "alt.png", palette1:'#00471B', palette2: '#002B5C'},
+  { name: "Wizards", img: "alt.png", palette1:'#e31837', palette2: '#002B5C'}
+];
+
+function extractPalette1(teamName){
+  console.log(teamName);
+  const team = players.find(t => t.name == teamName);
+  // console.log(team.palette1);
+  return team ? team.palette1 : '000000';
+}
+
+function extractPalette2(teamName){
+  console.log(teamName);
+  const team = players.find(t => t.name == teamName);
+  return team ? team.palette2 : '000000';
+}
+
+function getTeamImage(teamName) {
+  const team = players.find(t => t.name === teamName);
+  return team ? team.img : "alt.png"; // fallback image
+}
 
 const ItemTypes = {
   PLAYER: 'player'
@@ -93,6 +143,8 @@ function YourRoster() {
   const [livePoints, setLivePoints] = useState({});
   const { user } = useContext(AuthContext);
   const [teamName, setTeamName] = useState("Your Roster");
+  const [isEditing, setIsEditing] = useState(false);
+  
 
   const userId = user?.id;
 
@@ -321,7 +373,7 @@ const determineAllowedPositions = (positions) => {
       }
     };
     fetchLiveUpdates();
-    const interval = setInterval(fetchLiveUpdates, 30000);
+    const interval = setInterval(fetchLiveUpdates, 60000);
     return () => clearInterval(interval);
   }, [userId]);
 
@@ -414,6 +466,21 @@ const handleReturnToBench = async (slotId) => {
   }
 };
 
+const handleTeamNameSubmit = async (e) => {
+  e.preventDefault();
+  try {
+      await axios.post("http://localhost:5001/api/user/updateTeamName", 
+          { teamName }, 
+          { withCredentials: true }
+      );
+      setMessage("Team name updated successfully!");
+      setIsEditing(false);
+  } catch (error) {
+      console.error("Error updating team name:", error);
+      setMessage("Failed to update team name.");
+  }
+};
+
  const openPlayerModal = (player) => {
     setModalPlayer(player);
   };
@@ -437,10 +504,10 @@ const handleReturnToBench = async (slotId) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div>
-        <MenuBar />
+      <div style={{ backgroundImage: 'url("/locker-room-background.jpg")', backgroundSize: 'cover' }}>
+        <MenuBar />  
+
         <h1 className="YR_title">{teamName}</h1>
-        
         {/* Court Layout */}
         <div className="YR_court-wrapper">
           <div className="YR_court-container">
@@ -450,12 +517,46 @@ const handleReturnToBench = async (slotId) => {
                 <DroppableSlot slot={slot} onDropPlayer={handleDropPlayer}>
                   {slot.player && (
                     <>
-                      <DraggablePlayer player={slot.player} />
-                      <div className="YR_fantasy-points">
-                        <strong>Fantasy Points:</strong>{" "}
-                        {getFantasyPoints(slot.player)}
-                        {livePoints[slot.player?.id]?.isLive && <span className="YR_live-indicator"> LIVE</span>}
-                      </div>                      
+                  <div className="YR_player-card-hover">
+                    <DraggablePlayer player={slot.player}></DraggablePlayer>
+
+                    <div className="YR_player-expanded-card" style={{ backgroundImage: `radial-gradient(circle at center center, ${extractPalette2(slot.player.team)}, ${extractPalette1(slot.player.team)}), repeating-radial-gradient(circle at center center, ${extractPalette2(slot.player.team)}, ${extractPalette2(slot.player.team)}, 10px, transparent 20px, transparent 10px)`,
+backgroundBlendMode: `multiply;`, color:"white"}}>
+                      <div className="YR_player-expanded-upper">
+                      <img
+                        src={getTeamImage(slot.player.team)}
+                        alt={`Load`}
+                        className="w-8 h-8 inline-block mr-2"
+                        style={{position:"absolute",width:"20%", height:"15%", left:"75%"}}
+                      />
+                        <div className='YR_player-expanded-ranking' style={{color:"white"}}>
+                          Rank
+                          <p >{slot.player.rank}</p>
+                        </div>
+                        <div className='YR_player-expanded-picture'>
+
+                        <img
+                          src={`/headshots/${slot.player.name.split(' ').join('_')}_headshot.jpg`}
+                          onError={(e) => {
+                            e.target.onerror = null; 
+                            e.target.src = '/headshots/default.jpg';
+                          }}
+                          alt={slot.player.name}
+                          className="YR_player-portrait">
+                          </img>
+                        </div>
+                      </div>
+                      <div className='YR_player-expanded-lower'>
+                        <p style={{fontSize:"15px", marginBottom:"0"}}>{slot.player.name}</p>
+                        <hr style={{margin:"0"}}></hr>
+                        <p>{slot.player.team}</p>
+                        <p>Total Fan Points: {slot.player.totalFanPts}</p>
+                        <p>Current Fantasy Points: {getFantasyPoints(slot.player)}</p>
+                        <p>{livePoints[slot.player?.id]?.isLive && <span className="YR_live-indicator"> LIVE</span>}</p>
+                      </div>
+
+                    </div>
+                  </div>                   
                       
                       <button
                         className="YR_info-btn"
@@ -466,10 +567,8 @@ const handleReturnToBench = async (slotId) => {
                       >
                         Info
                       </button>
-
                       <button
                         className="YR_info-btn"
-                        backgroundColor="red"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleReturnToBench(slot.id);
@@ -489,14 +588,20 @@ const handleReturnToBench = async (slotId) => {
         {/* Bench Layout */}
         <div className="YR_roster-page">
           <div className="YR_roster-builder">
-            <div className="YR_bench">
-              <h2>Bench ({bench.length} Players)</h2>
+            <div className="YR_bench">              
+              <h2 className='YR_bench-titlecard'>Bench ({bench.length} Players)</h2>
               <div className="YR_bench-list">
                 {bench.map(player => (
-                  <div key={player.id} className="YR_bench-item">
+                  <div key={player.id} className="YR_bench-item" style={{ backgroundImage: `radial-gradient(circle at center center, ${extractPalette2(player.team)}, ${extractPalette1(player.team)}), repeating-radial-gradient(circle at center center, ${extractPalette2(player.team)}, ${extractPalette2(player.team)}, 10px, transparent 20px, transparent 10px)`,
+backgroundBlendMode: `multiply;`,color:"white"}}>
                     <DraggablePlayer player={player} />
-                    <button
+                    <p>{player.team}</p>
+                    <p>Total Fan Points: {player.totalFanPts}</p>
+                    <p>Current Fantasy Points: {getFantasyPoints(player)}</p>
+                    <p>{livePoints[player?.id]?.isLive && <span className="YR_live-indicator"> LIVE</span>}</p>                  
+                     <button
                       className="YR_info-btn"
+                      style={{marginTop:"-10%"}}
                       onClick={() => openPlayerModal(player)}
                     >
                       Info

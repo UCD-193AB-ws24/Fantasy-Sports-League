@@ -433,6 +433,52 @@ const ProfilePage = () => {
     const [teamName, setTeamName] = useState("");
     const [isEditing, setIsEditing] = useState(false);
     const [message, setMessage] = useState("");
+    const [livePoints, setLivePoints] = useState({});
+    const [players, setPlayers] = useState([]);
+    const [playerNames, setPlayerNames] = useState([]);
+    const [playerTeams, setPlayerTeams] = useState([]);
+    const [gameLogs, setGameLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [leagues, setLeagues] = useState([]);
+    const [refreshing, setRefreshing] = useState(false);
+
+    useEffect(() => {
+      // Fetch specific league if user exists
+      if (user) {
+          const fetchLeagues = async () => {
+              try {
+                //http://localhost:5001/api/leagues/${user.leagueId}
+                  const response = await axios.get(`http://localhost:5001/api/leagues/${user.leagueId}`, {
+                      withCredentials: true
+                  });
+                  setLeagues(response.data.leagues || "");
+                  // console.log("These are the: ", leagues);
+              } catch (error) {
+                  console.error("Error fetching leagues:", error);
+              }
+          };
+          fetchLeagues();
+      }
+  }, [user.leagueId]);
+
+    useEffect(() => {
+        const fetchPlayerNames = async () => {
+          try {
+            const response = await axios.get(`http://localhost:5001/api/roster/${user.id}/playerNames`, {
+              withCredentials: true
+            });
+            setPlayerNames(response.data.playerNames);
+            console.log(playerNames);
+          } catch (error) {
+            console.error("Error fetching player names:", error);
+          }
+        };
+    
+        if (user.id) {
+          fetchPlayerNames();
+        }
+      }, [user.id]);
+
 
     useEffect(() => {
         // Fetch team name if user exists
@@ -443,6 +489,8 @@ const ProfilePage = () => {
                         withCredentials: true
                     });
                     setTeamName(response.data.teamName || "");
+                    // console.log("These are the: ", teamName);
+
                 } catch (error) {
                     console.error("Error fetching team name:", error);
                 }
@@ -451,10 +499,105 @@ const ProfilePage = () => {
         }
     }, [user]);
 
+
+    useEffect(() => {
+      const fetchPlayerTeams = async () => {
+        try {
+          const response = await axios.get(`http://localhost:5001/api/roster/${user.id}/playerTeams`, {
+            withCredentials: true
+          });
+          setPlayerTeams(response.data.playerTeams);
+        } catch (error) {
+          console.error("Error fetching player teams:", error);
+        }
+      };
+    
+      if (user.id) {
+        fetchPlayerTeams();
+      }
+    }, [user.id]); // This should only run once when user.id is set
+    
+    useEffect(() => {
+      if (playerNames.length === 0 || playerTeams.length === 0) return;
+    
+      const initial = playerNames.map((pn) => {
+        const pt = playerTeams.find((t) => t.id === pn.id);
+        return {
+          playerId: pn.id,
+          name:     pn.name,
+          team:     pt?.team || "Unknown",
+          liveFanPts: 0,
+          isLive:   false
+        };
+      });
+    
+      setPlayers(initial);
+    }, [playerNames, playerTeams]);
+
+    useEffect(() => {
+      // don’t start polling until you have at least one player
+      if (players.length === 0) return;
+    
+      const fetchLiveUpdates = async () => {
+        setRefreshing(true);
+        try {
+          const { data } = await axios.get(
+            `http://localhost:5001/api/roster/${user.id}/livePoints`,
+            { withCredentials: true }
+          );
+    
+          const updateMap = new Map(
+            data.liveUpdates.map((u) => [u.playerId, u])
+          );
+    
+          // merge stats in-place
+          setPlayers((prev) =>
+            prev.map((p) =>
+              updateMap.has(p.playerId)
+                ? {
+                    ...p,
+                    liveFanPts: updateMap.get(p.playerId).liveFanPts,
+                    isLive:    updateMap.get(p.playerId).isLive,
+                  }
+                : p
+            )
+          );
+        } catch (err) {
+          console.error("live‑stats error", err);
+        } finally {
+          setRefreshing(false);
+        }
+      };
+    
+      fetchLiveUpdates();
+    
+      const interval = setInterval(fetchLiveUpdates, 120_000);
+    
+      return () => clearInterval(interval);
+    }, [user.id, players.length]);    
+
+
+      const handleUserNameChange = async (e) => {
+          e.preventDefault();
+          try {
+              await axios.post("http://localhost:5001/api/user/updateUserName", 
+                  { name }, 
+                  { withCredentials: true }
+              );
+              setMessage("Username updated successfully!");
+              setIsEditing(false);
+              setUser((prevUser) => ({ ...prevUser, name }));
+          } catch (error) {
+              console.error("Error updating Username:", error);
+              setMessage("Failed to update Username.");
+          }
+      };
+      
     const handleLogout = async () => {
-        await logout(); // Call logout from AuthContext
-        navigate("/"); // Redirect after logout
+        await logout();
+        navigate("/");
     };
+
 
     const handleTeamNameSubmit = async (e) => {
         e.preventDefault();
@@ -470,10 +613,102 @@ const ProfilePage = () => {
             setMessage("Failed to update team name.");
         }
     };
+     console.log(user);
 
     return (
         <div>
             <MenuBar />
+
+            <div className="profile-grid-main-container">
+                <div className="profile-name-container">
+                {user ? (
+                    <>
+                      <div className="first-section">
+                        <h2>Profile Details</h2>
+                        <p>{user ? (
+                          <div>             
+                                  {isEditing ? (
+                                      <form onSubmit={handleUserNameChange}>
+                                          <input 
+                                              type="text" 
+                                              value={user.name} 
+                                              onChange={(e) => setUsername(e.target.value)}
+                                              placeholder = {user.name}
+                                              className="profile-namebar-changename-bar"
+                                          />
+                                          <div>
+                                              <button type="submit">Save</button>
+                                              <button 
+                                                type="button" 
+                                                onClick={() => setIsEditing(false)}
+                                              >
+                                                Cancel
+                                              </button>
+                                          </div>
+                                      </form>
+                                  ) : (
+                                  <div>
+                                      <p style={{ margin: 0 }}>{user.name}</p>
+                                          <button className="Btn" onClick={() => setIsEditing(true)}>
+                                            
+                                          </button>
+                                  </div>
+                                  )}
+                          </div>
+                      ) : (
+                          <p>You are not logged in.</p>
+                      )}</p>
+                      </div>
+                      <div className="second-section">
+                        <p>Email: {user.email}</p>
+                        <p>Joined on: {user.createdAt.slice(0,10)}</p>
+                        
+                      </div>  
+                       
+                    </>
+                ) : (
+                    <p>You are not logged in.</p>
+                )}
+                </div>
+                <div className="profile-leagues-container">
+                    <h3 style={{textAlign:"center", fontSize:50}}>Current Leagues:</h3>
+                    <div className="profile-leagues-multiple-section">
+                      
+                    </div>
+                </div>
+                <div className="profile-template-container">
+
+                </div>
+                <div className="profile-upcoming-games">
+                  <h3 style={{textAlign:"center", fontSize:50, padding:20}}>Your Roster Quickview</h3>
+                  <div className="profile-goTo-rosterButton">
+                    <button onClick={() => navigate('/YourRoster')}>Go To Your Roster</button>
+                  </div>
+                  {refreshing && (
+                      <p style={{ textAlign: "center", fontStyle: "italic", position:"absolute",left:"58%", top:"58%" }}>
+                        Currently Refreshing For Live Stats
+                      </p>
+                    )}
+                  <div className="profile-roster-container">
+                    
+                    {players.length === 0 ? (
+                      <p>Loading roster…</p>
+                    ) : (
+                      players.map((p) => (
+                        <div key={p.playerId} className="profile-roster-item">
+                          <h3>{p.name}</h3>
+                          <p>{p.team}</p>
+                          <p>Live Fantasy Points: {p.liveFanPts}</p>
+                          <p>Status: {p.isLive ? "Live" : "Not Live"}</p>
+                        </div>
+                      ))
+                    )}
+                    
+                  </div>
+                    
+                </div>
+            </div>
+
             <div style={{ textAlign: "center", marginTop: "50px" }}>
                 <div className="profilepage-logout-container">
                     <button onClick={handleLogout} className="button-49"><p className="Logout-title">Logout</p></button> 

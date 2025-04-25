@@ -228,7 +228,7 @@ app.get('/profile', authenticate, async (req, res) => {
   try {
       const userData = await prisma.user.findFirst({
           where: { id: req.user.id },
-          select: { id: true, name: true, email: true, createdAt: true}
+          select: { id: true, name: true, email: true, createdAt: true, teamName: true, leagueId: true, league:true}
       });
       
       if (!userData) {

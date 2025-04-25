@@ -17,10 +17,10 @@
     "framer-motion": "^12.4.5",
     "google": "^2.1.0",
     "passport": "^0.7.0",
-    "react": "^19.0.0",
+    "react": "^19.1.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "^19.0.0",
+    "react-dom": "^19.1.0",
     "react-router-dom": "^7.3.0",
     "reactstrap": "^9.2.3",
     "socket.io-client": "^4.8.1"
