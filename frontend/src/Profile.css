@@ -1,56 +1,44 @@
-.profile-grid-main-container{
-  display: grid;
-  background: rgb(255, 255, 255);
-  width: 100%;
-  height: 100vh;
-  padding: 40px;
-  grid-template-columns: 1fr 2.5fr;
-  grid-template-rows: 1fr 1fr;
-  column-gap: 40px;
-  row-gap: 40px;
+.profile-details.mx-auto {
+  text-align: center;
 }
 
-.profile-name-container{
-  background: rgb(202, 202, 202);
-  display: grid;
-  grid-template-rows: auto auto;
-  gap: 1rem;
+.profile-details.mx-auto .title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
-.first-section{
-  display: grid;
-  grid-template-rows: auto auto auto;
-  justify-content: center;
+.profile-info {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.team-name-section .lead {
+  font-size: 2rem;
+  font-weight: 500;
 }
 
-.profile-template-container {
-  background: grey;
+.button-23 {
+  font-size: 1.1rem;  
+  padding: 0.5rem 0.75rem; 
+  background-color: transparent;
 }
-
-.profile-roster-container{
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  padding: 10px;
-  /* gap: 20px; */
-  background: rgb(219, 215, 215);
+.button-23:hover {
+  background-color: #D3D3D3;
+  color: black;
 }
-
-.profile-goTo-rosterButton{
-  display: flex;
-  margin-left: 60%;
-  margin-top: -3%;
-  position:absolute;
-  
+.button-49 {
+  background-color: transparent;
+  border: 2px solid #dc3545;   /* bootstrap “danger” red */
+  color: #dc3545;
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 1.1rem;  
+  padding: 0.5rem 0.75rem; 
 }
-
-.profile-upcoming-games{
-  background: rgb(219, 215, 215);
+.button-49:hover {
+  background-color: #dc3545;
+  color: #fff;
 }
-
-
-.profile-leagues-container{
-  background: rgb(202, 202, 202);
+.profile-message {
+  color: #28a745;      /* green success text */
+  font-weight: 500;
+  margin-bottom: 1rem;
 }
-
-

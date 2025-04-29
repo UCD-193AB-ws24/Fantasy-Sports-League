@@ -2,7 +2,7 @@
 .YR_title {
   margin: 1rem;
   text-align: center;
-  color: whitesmoke;
+  color: black;
   font-weight: bold;
   font-size: 60px;
 }
@@ -24,7 +24,7 @@
 .YR_court-container {
   position: relative;
   display: inline-block;
-  width: 65%;
+  width: 90%;
   height:auto;
   border: 15px solid transparent;
   border-image: linear-gradient(45deg, #FFA500, #FF0000) 1;
@@ -35,7 +35,7 @@
 .YR_court-image {
   display: block;
   width: 100%;  /* Adjust as needed */
-  height: 60vh;
+  height: 80vh;
 }
 
 /* Team slots positioned over the court image */
@@ -55,41 +55,35 @@
   align-items: center;
 }
 
-.YR_team-slot:hover {
-  background: #f7f7f7;
-  transform: scale(1.4);
-  z-index: 999;
-}
-
 /* Example slot positions (adjust as desired) */
 .slot-pg {
   top: 20%;
-  left: 32%;
+  left: 35%;
 }
 
 .slot-sg {
-  bottom: 10%;
-  left: 32%;
+  bottom: 20%;
+  left: 35%;
 }
 
 .slot-g {
   top: 20%;
-  right: 32%;
+  right: 35%;
 }
 
 .slot-sf {
-  top: 10%;
-  left: 15%;
+  top: 15%;
+  left: 18%;
 }
 
 .slot-pf {
   bottom: 15%;
-  left: 15%;
+  left: 18%;
 }
 
 .slot-f {
-  top: 10%;
-  right: 15%;
+  top: 15%;
+  right: 18%;
 }
 
 .slot-c-1 {
@@ -103,13 +97,13 @@
 }
 
 .slot-util-1 {
-  bottom: 10%;
-  right: 32%;
+  bottom: 20%;
+  right: 35%;
 }
 
 .slot-util-2 {
   bottom: 15%;
-  right: 15%;
+  right: 18%;
 }
 
 /* IL slots on the sideline (left side) */
@@ -166,9 +160,10 @@
   gap: 2rem;
   flex-wrap: wrap;
   border-radius: 25px;
-  background: rgba(0, 0, 0, 0.5);
-  width: 120%;
+  /* remove dark overlay and forced width */
+  /* background: rgba(0, 0, 0, 0.5); */
   padding: 1rem;
+  justify-content: center;
 
 }
 
@@ -176,9 +171,7 @@
   display: grid;
   padding: 0.2rem;
   max-width: 1200px;
-  /* margin: 0 auto; */
-  margin-top: 8%;
-  margin-left: 25%;
+  margin: 8% auto 0 auto;
   font-family: Arial, sans-serif;
   text-align: center;
   align-items: center;
@@ -211,12 +204,6 @@
   flex: 10% 0 15%;
 }
 
-.YR_bench-item:hover{
-  transform: scale(1.1);
-  transition: transform 0.25s ease, opacity 0.25s ease;
-  opacity: 1;
-}
-
 
 
 .YR_player-expanded-card {
@@ -239,18 +226,6 @@
   transition: transform 0.25s ease, opacity 0.25s ease;
   z-index: 10;
   pointer-events: none;
-}
-
-.YR_player-card-hover {
-  position: relative;
-  display: inline-block;
-  transition: all 0.3s ease;
-  opacity: 1;
-}
-
-.YR_player-card-hover:hover .YR_player-expanded-card {
-  transform: scale(1.3);
-  opacity: 1;
 }
 
 
@@ -308,10 +283,6 @@
   margin-top: 0.5rem;
 }
 
-.YR_info-btn:hover {
-  background-color: #0056b3;
-}
-
 /* Court Slot Portrait */
 .YR_court-slot-portrait {
   width: 100%;
@@ -331,4 +302,105 @@
   50% { opacity: 0.5; }
   100% { opacity: 1; }
 }
+.YR_fifa-card {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 260px;
+  background: linear-gradient(135deg, #e0c068, #f8e19f);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  color: #222;
+  cursor: grab;
+}
+.YR_fifa-card.YR_dragging { opacity: 0.5 !important; }
 
+.YR_fifa-header { display: flex; flex-direction: column; position: relative;}
+.YR_fifa-fantasy { font-size: 32px; font-weight: bold; line-height:1; }
+.YR_fifa-position { font-size: 14px; margin-bottom:4px; }
+.YR_fifa-team-logo {
+  position: absolute;
+  top: 85%;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-top: 4px;      /* space below position text */
+}
+
+.YR_fifa-body {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex:1;
+}
+.YR_fifa-portrait {
+  width: 125px;
+  border-radius:4px;
+  margin-left:8px;
+}
+
+.YR_fifa-name {
+  font-size:16px;
+  font-weight:bold;
+  text-align:center;
+}
+.YR_live-indicator {
+  margin-left:4px;
+  font-size:12px;
+  color:red;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%   { opacity:1; }
+  50%  { opacity:0.5; }
+  100% { opacity:1; }
+}
+
+.YR_fifa-stats {
+  display: grid;
+  /* three auto-sized columns; six items → two rows of three */
+  grid-template-columns: auto auto auto;
+  /* center the grid itself inside its parent */
+  justify-content: center;
+  /* spacing between cells (row-gap col-gap) */
+  gap: 4px 12px;
+  font-size: 12px;
+}
+
+.YR_fifa-stats div {
+  /* each cell is a flex row for label + value */
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* add the colon after each stat label */
+.YR_fifa-stats div span:first-child::after {
+  content: ":";
+}
+.YR_fifa-buttons {
+  display:flex;
+  gap:4px;
+}
+.YR_fifa-buttons .YR_info-btn {
+  flex:1;
+  padding:4px 0;
+  font-size:12px;
+  border-radius:4px;
+}
+.YR_bench-list .YR_fifa-card {
+  position: static !important;
+  top: auto     !important;
+  left: auto    !important;
+  transform: none!important;
+  margin: 0;
+  width: 250px;
+  height: 300px;
+}
