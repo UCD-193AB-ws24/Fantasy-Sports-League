@@ -159,7 +159,7 @@
   right: 30%;
 }
 
-.Matchups_slot-util1 {
+.Matchups_slot-util-1 {
   bottom: 10%;
   right: 30%;
 }
@@ -179,17 +179,17 @@
   right: 5%;
 }
 
-.Matchups_slot-util2 {
+.Matchups_slot-util-2 {
   bottom: 0%;
   right: 5%;
 }
 
-.Matchups_slot-c1 {
+.Matchups_slot-c-1 {
   top: 40%;
   left: 5%;
 }
 
-.Matchups_slot-c2 {
+.Matchups_slot-c-2 {
   top: 40%;
   right: 5%;
 }
@@ -303,7 +303,7 @@
   
   .Matchups_team-slot {
     width: 80px;
-    height: 60px;
+    height: 100px;
     font-size: 0.8rem;
   }
 }

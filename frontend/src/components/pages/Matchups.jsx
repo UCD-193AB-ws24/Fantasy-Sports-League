@@ -47,7 +47,8 @@ const formatDate = (date) => {
 return date.toLocaleDateString('en-US', { 
   weekday: 'short', 
   month: 'short', 
-  day: 'numeric' 
+  day: 'numeric', 
+  year: 'numeric'
 });
 };
 
@@ -75,16 +76,34 @@ if (!stats) return 0;
 
 // Fantasy point formula
 const fantasyPoints = (
-  (parseFloat(stats.pts || 0)) + 
-  (parseFloat(stats.reb || 0) * 1.2) + 
-  (parseFloat(stats.ast || 0) * 1.5) + 
-  (parseFloat(stats.st || 0) * 2) + 
-  (parseFloat(stats.blk || 0) * 2) - 
-  (parseFloat(stats.to || 0) * 0.5)
+  (parseFloat(stats.points || 0)) + 
+  (parseFloat(stats.rebounds || 0) * 1.2) + 
+  (parseFloat(stats.assists || 0) * 1.5) + 
+  (parseFloat(stats.steals || 0) * 2) + 
+  (parseFloat(stats.blocks || 0) * 2) - 
+  (parseFloat(stats.turnovers || 0) * 0.5)
 );
 
 return fantasyPoints.toFixed(1);
 };
+
+const calcSpecificFantasyPoints = (value, theStat) => {
+  if(value == 0){
+    return 0;
+  }
+   if(theStat == "rebounds"){
+    return (parseFloat(value || 0) * 1.2);
+  } else if(theStat == "assists"){
+    return (parseFloat(value || 0) * 1.5);
+  } else if(theStat == "steals"){
+    return (parseFloat(value || 0) * 2);
+  } else if(theStat == "blocks"){
+    return (parseFloat(value || 0) * 2);
+  } else if(theStat == "turnovers"){
+    return (parseFloat(value || 0) * 0.5);
+  }
+  return 0;
+  };
 
 const Matchups = () => {
 const { user } = useContext(AuthContext);
@@ -135,6 +154,8 @@ useEffect(() => {
     loadTeamData();
   }
 }, [user]);
+const [trueDailyPoints, setTrueDailyPoints] = useState(0);
+const [trueWeeklyPoints, setTrueWeeklyPoints] = useState(0);
 
 // Update data when day/week selection changes
 useEffect(() => {
@@ -142,6 +163,19 @@ useEffect(() => {
     updateTeamLayouts();
     updateComparisonData();
     updateScores();
+    console.log("Current Week is: " ,selectedWeek);
+    const weeklyPoints = weeklyPointCalculation(myTeam.roster.filter(player => player.position != "Bench"));
+
+    setTrueWeeklyPoints(weeklyPoints);
+    // console.log("The weekly points in total: ", weeklyPoints);
+    // console.log(myTeam.roster.filter(player => player.position != "Bench"));
+    const points = dailyPointCalculation(myTeam.roster.filter(player => player.position != "Bench"), formatXVersion(getSelectedDateString()));
+
+    setTrueDailyPoints(points);
+
+    
+
+    console.log("First initial change to true daily points: ", trueDailyPoints);
   }
 }, [selectedDay, selectedWeek, myTeam.roster, opponentTeam.roster, loading]);
 
@@ -314,27 +348,27 @@ const determineAllowedPositions = (positions) => {
   const allowedPositions = [];
   
   if (positions.includes("PG")) {
-    allowedPositions.push("PG", "G", "Util1", "Util2");
+    allowedPositions.push("PG", "G", "Util-1", "Util-2");
   }
   
   if (positions.includes("SG")) {
-    allowedPositions.push("SG", "G", "Util1", "Util2");
+    allowedPositions.push("SG", "G", "Util-1", "Util-2");
   }
   
   if (positions.includes("SF")) {
-    allowedPositions.push("SF", "F", "Util1", "Util2");
+    allowedPositions.push("SF", "F", "Util-1", "Util-2");
   }
   
   if (positions.includes("PF")) {
-    allowedPositions.push("PF", "F", "Util1", "Util2");
+    allowedPositions.push("PF", "F", "Util-1", "Util-2");
   }
   
   if (positions.includes("C")) {
-    allowedPositions.push("C1", "C2", "Util1", "Util2");
+    allowedPositions.push("C1", "C2", "Util-1", "Util-2");
   }
   
   if (allowedPositions.length === 0) {
-    allowedPositions.push("Util1", "Util2");
+    allowedPositions.push("Util-1", "Util-2");
   }
   
   return allowedPositions;
@@ -745,40 +779,49 @@ const updatePlayerLiveStats = async (player) => {
 const updateTeamLayouts = () => {
   // Define positions for the court
   const positions = [
-    "PG", "SG", "G", "SF", "PF", "F", "C1", "C2", "Util1", "Util2"
+    "PG", "SG", "G", "SF", "PF", "F", "C-1", "C-2", "Util-1", "Util-2"
   ];
   
+  
+  //Error in layout - Original code loads every player in a user's collection, but we want only the players on the court 
+  //Fix - 4/27
+  const onCourt = myTeam.roster.filter(player => player.position !== "Bench");
+
+
   // Create empty layouts
   const myLayout = positions.map(pos => ({ position: pos, player: null }));
   const opLayout = positions.map(pos => ({ position: pos, player: null }));
   
   // Fill layouts with players based on positions
-  myTeam.roster.forEach(player => {
+  onCourt.forEach(player => {
+    console.log(player.name + " " + player.position);
     if (!player) return;
     
     // First try to match exact position
     const exactPosition = myLayout.find(slot => 
       slot.position === player.position && !slot.player
     );
-    
+
+    console.log(exactPosition);
+
     if (exactPosition) {
       exactPosition.player = player;
       return;
     }
     
     // Then try allowed positions
-    if (player.allowedPositions && player.allowedPositions.length > 0) {
-      for (const pos of player.allowedPositions) {
-        const compatibleSlot = myLayout.find(slot => 
-          slot.position === pos && !slot.player
-        );
+    // if (player.allowedPositions && player.allowedPositions.length > 0) {
+    //   for (const pos of player.allowedPositions) {
+    //     const compatibleSlot = myLayout.find(slot => 
+    //       slot.position === pos && !slot.player
+    //     );
         
-        if (compatibleSlot) {
-          compatibleSlot.player = player;
-          return;
-        }
-      }
-    }
+    //     if (compatibleSlot) {
+    //       compatibleSlot.player = player;
+    //       return;
+    //     }
+    //   }
+    // }
   });
   
   // Same for opponent layout
@@ -796,18 +839,18 @@ const updateTeamLayouts = () => {
     }
     
     // Then try allowed positions
-    if (player.allowedPositions && player.allowedPositions.length > 0) {
-      for (const pos of player.allowedPositions) {
-        const compatibleSlot = opLayout.find(slot => 
-          slot.position === pos && !slot.player
-        );
+    // if (player.allowedPositions && player.allowedPositions.length > 0) {
+    //   for (const pos of player.allowedPositions) {
+    //     const compatibleSlot = opLayout.find(slot => 
+    //       slot.position === pos && !slot.player
+    //     );
         
-        if (compatibleSlot) {
-          compatibleSlot.player = player;
-          return;
-        }
-      }
-    }
+    //     if (compatibleSlot) {
+    //       compatibleSlot.player = player;
+    //       return;
+    //     }
+    //   }
+    // }
   });
   
   setMyTeamLayout(myLayout);
@@ -822,23 +865,61 @@ const updateComparisonData = () => {
   const isCurrentDay = selectedWeek === 0 && selectedDay === getDayOfWeek();
   
   // Key positions for comparison
-  const keyPositions = ["PG", "SG", "SF", "PF", "C"];
+  const keyPositions = ["PG", "SG", "SF", "PF", "C-1"];
   const comparison = [];
-  
-  keyPositions.forEach(pos => {
-    // Find players for this position in both teams
-    const myPlayer = findPlayerForPosition(myTeam.roster, pos);
-    const oppPlayer = findPlayerForPosition(opponentTeam.roster, pos);
+
+  let availablePlayers = myTeam.roster.filter(p => p.position !== "Bench").slice();
+  let availableOPPlayers = opponentTeam.roster.filter(p => p.position !== "Bench").slice();
+
+  // keyPositions.forEach(pos => {
+  //   // Find players for this position in both teams
+  //   const myPlayer = findPlayerForPosition(onCourt, pos);
+  //   const oppPlayer = findPlayerForPosition(opponentTeam.roster, pos);
     
-    if (myPlayer || oppPlayer) {
-      // Get stats for the player on the selected date
-      const myPlayerStats = getPlayerStatsForDate(myPlayer, formattedDate, isCurrentDay);
-      const oppPlayerStats = getPlayerStatsForDate(oppPlayer, formattedDate, isCurrentDay);
+  //   if (myPlayer || oppPlayer) {
+  //     // Get stats for the player on the selected date
+  //     const myPlayerStats = getPlayerStatsForDate(myPlayer, formattedDate, isCurrentDay);
+  //     const oppPlayerStats = getPlayerStatsForDate(oppPlayer, formattedDate, isCurrentDay);
       
+  //     comparison.push({
+  //       position: pos,
+  //       myPlayer: myPlayerStats,
+  //       opponentPlayer: oppPlayerStats
+  //     });
+  //   }
+  // });
+
+  //NEED TO WORK ON ADJUSTING POSITIONS FOR ONLY PLAYERS ON THE COURT AND IN THE CORRECT POSITIONS 
+
+  keyPositions.forEach(pos => {
+    const idx = availablePlayers.findIndex(p =>
+      p.position === pos ||
+      (p.positions && p.positions.includes(pos))
+    );
+    
+    //Function prevents players from being reused in another position
+    let myPlayerStats = null;
+    if (idx !== -1) {
+      const player = availablePlayers.splice(idx, 1)[0];
+      myPlayerStats = getPlayerStatsForDate(player, formattedDate, isCurrentDay);
+    }
+
+    let opPlayerStats = null;
+    const oppIdx = availableOPPlayers.findIndex(p =>
+      p.position === pos || 
+      (p.positions && p.positions.includes(pos))
+    );
+    if (oppIdx !== -1)
+    {
+      const opPlayer = availableOPPlayers.splice(oppIdx, 1)[0];
+      opPlayerStats = getPlayerStatsForDate(opPlayer, formattedDate, isCurrentDay);
+    }    
+  
+    if (myPlayerStats || opPlayerStats) {
       comparison.push({
         position: pos,
-        myPlayer: myPlayerStats,
-        opponentPlayer: oppPlayerStats
+        myPlayer:       myPlayerStats,
+        opponentPlayer: opPlayerStats
       });
     }
   });
@@ -864,8 +945,8 @@ const findPlayerForPosition = (roster, position) => {
     return roster.find(p => p?.position === "F");
   }
   
-  if (position === "C") {
-    return roster.find(p => p?.position === "C1" || p?.position === "C2");
+  if (position === "C-1") {
+    return roster.find(p => p?.position === "C-1" || p?.position === "C-2");
   }
   
   return null;
@@ -1045,7 +1126,6 @@ const updateScores = () => {
         weeklyTotal += parseFloat(updatedDailyPoints[i] || 0);
       }
     }
-    
     return {
       ...prev,
       dailyPoints: updatedDailyPoints,
@@ -1112,6 +1192,100 @@ const getSelectedDateString = () => {
   return formatDate(date);
 };
 
+// const getOppStats = async (player) => {
+//   if (!player?.name) return player;
+  
+//   try {
+//     const response = await axios.post('/api/players/getCommonPlayerInfo', {
+//       withCredentials: true,
+//       playerName: player.name
+//     });
+    
+//     const liveData = response.data;
+//     console.log("The ops current data: ", liveData);
+  
+//   } catch (error) {
+//     console.error(`Error fetching live stats for ${player.name}:`, error);
+//     return player;
+//   }
+// };
+
+const calcTest = (player) => {
+  
+  // console.log("This player's latest game stats: ",player.name + " " + player.stats[0].assists);
+
+  const arrayOfPoints = player.stats.map(stat => Number(calculateFantasyPoints(stat)));
+  const totalPoints = arrayOfPoints.reduce((sum, points) => sum + points, 0);
+  const averagePoints = arrayOfPoints.length > 0 ? totalPoints / arrayOfPoints.length : 0;
+
+  // console.log(`Average fantasy points for ${player.name}:`, averagePoints.toFixed(2));
+
+  return averagePoints.toFixed(2);
+
+};
+
+//Calculates a Player's points for a specific day - Parameters (Player Name, Game Date)
+const calcPointsToday = (player, date) => {
+  
+  // console.log("This player's latest game stats: ",player.name + " " + player.stats[0].assists);
+  const points = pointsForSNGGame(player, date, "points");
+  const rebounds = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "rebounds"), "rebounds");
+  const assists = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "assists"), "assists");
+  const turnovers = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "turnovers") , "turnovers");
+  const blocks = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "blocks"), "blocks");
+  const steals = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "steals"), "steals");
+  return (points + rebounds + assists + steals + blocks - turnovers);
+};
+
+//Added an extra format version to turn into NBA API because I was too lazy to refactor old code lol - 4/30
+const formatXVersion = (date) => {
+  const dateObj = new Date(date);
+  const formatted = dateObj.toISOString().split("T")[0];
+  return formatted;
+}
+
+//Finds the player's stat for a specific game
+const pointsForSNGGame = (player, theDate, thePosition) => {
+
+  const findTheDate = player.stats.filter(stat => (stat.game_date).slice(0,10) == formatXVersion(theDate));
+
+  if (findTheDate.length > 0) {
+    const firstMatch = findTheDate[0][thePosition];  
+
+    return firstMatch;
+  } else {
+    // console.log("No matches found.");
+  }
+  return 0;
+}
+
+//Calculates the daily points for an entire team that is currently on the court - not bench
+const dailyPointCalculation = (PlayerList, theDate) => {
+  let total = 0;
+  for (let i = 0; i < PlayerList.length; i++) {
+    total += calcPointsToday(PlayerList[i], theDate);
+  }
+  return total;
+}
+
+//Get Player list, traverse the set of days, and calculate points for every player that played that week
+const weeklyPointCalculation = (PlayerList) => {
+  // console.log(formatXVersion(formatDate(getDateForDayInWeek(0, 0))));
+  // console.log("LAST DAY IS: ", formatXVersion(formatDate(getDateForDayInWeek(6, 0))));
+
+  let weekTotal = 0;
+
+  //For each day of this current week
+  for(let idx = 0 ; idx < PlayerList.length; idx++){
+    // console.log("Day of the Week: ", formatXVersion(formatDate(getDateForDayInWeek([idx], selectedWeek))))
+    let today = formatXVersion(formatDate(getDateForDayInWeek([idx], selectedWeek)));
+    weekTotal += dailyPointCalculation(PlayerList, today);
+  }
+
+  return weekTotal;
+
+}
+
 if (loading) {
   return (
     <>
@@ -1142,6 +1316,7 @@ return (
             </option>
           ))}
         </select>
+
       </div>
 
       {/* Team info and scores */}
@@ -1149,9 +1324,9 @@ return (
         <div className="Matchups_team-info">
           <h2>{myTeam.name}</h2>
           <h1 className="Matchups_big-score">
-            {myTeam.dailyPoints[selectedDay] || "0.0"}
+            {trueDailyPoints}
           </h1>
-          <p>Week Total: {myTeam.totalPoints || "0.0"}</p>
+          <p>Week Total: {trueWeeklyPoints.toFixed(1)}</p>
           <p>Date: {getSelectedDateString()}</p>
         </div>
         
@@ -1167,9 +1342,9 @@ return (
           <p>Week Total: {opponentTeam.totalPoints || "0.0"}</p>
           <p>
             {selectedWeek < 0 ? "Completed" : 
-             selectedWeek > 0 ? "Upcoming" : 
-             selectedDay < getDayOfWeek() ? "Completed" :
-             selectedDay > getDayOfWeek() ? "Upcoming" : "In Progress"}
+            selectedWeek > 0 ? "Upcoming" : 
+            selectedDay < getDayOfWeek() ? "Completed" :
+            selectedDay > getDayOfWeek() ? "Upcoming" : "In Progress"}
           </p>
         </div>
       </div>
@@ -1194,7 +1369,7 @@ return (
         {/* My team court */}
         <div className="Matchups_court-section">
           <h3>
-            {myTeam.name} - {daysOfWeek[selectedDay]} {getSelectedDateString()}
+            {myTeam.name} - {getSelectedDateString()}
           </h3>
           <div className="Matchups_court-container">
             <img
@@ -1214,8 +1389,13 @@ return (
                   {slot.player ? (
                     <div>
                       <div>{slot.player.name}</div>
+                      {/* <p>{slot.player.avgFanPts.toFixed(1)}</p> */}
+                      {/* <p>Calculation of Points {calcTest(slot.player)}</p> */}
+                      {/* <p> pointsForSNGGame(slot.player)}</p> */}
+                      <p>{calcPointsToday(slot.player, getSelectedDateString(), "points")}</p>
+
                       <div>
-                        {getPlayerFantasyPoints(slot.player)}
+                        {/* {getPlayerFantasyPoints(slot.player)} */}
                         {slot.player.isLive && <span style={{color: 'green', fontWeight: 'bold'}}> LIVE</span>}
                       </div>
                     </div>
@@ -1229,7 +1409,7 @@ return (
         {/* Opponent team court */}
         <div className="Matchups_court-section">
           <h3>
-            {opponentTeam.name} - {daysOfWeek[selectedDay]} {getSelectedDateString()}
+            {opponentTeam.name} - {getSelectedDateString()}
           </h3>
           <div className="Matchups_court-container">
             <img
@@ -1264,11 +1444,13 @@ return (
 
       {/* Player comparison table */}
       <div className="Matchups_comparison-table">
-        <h3>Player Comparison for {daysOfWeek[selectedDay]} {getSelectedDateString()}</h3>
+        {/* The below line prints the DAY twice, change back if causing issues - 4/30 */}
+        {/* <h3>Player Comparison for {daysOfWeek[selectedDay]} {getSelectedDateString()}</h3> */}
+        <h3>Player Comparison for {getSelectedDateString()}</h3>
         <table>
           <thead>
             <tr>
-              <th>My Player</th>
+              <th style={{width:"10%"}}>My Player</th>
               <th>PTS</th>
               <th>REB</th>
               <th>AST</th>
@@ -1276,7 +1458,7 @@ return (
               <th>ST</th>
               <th>TO</th>
               <th>Position</th>
-              <th>Opponent Player</th>
+              <th style={{width:"10%"}}>Opponent Player</th>
               <th>PTS</th>
               <th>REB</th>
               <th>AST</th>
@@ -1307,12 +1489,13 @@ return (
                     </>
                   ) : "N/A"}
                 </td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer?.pts?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer?.reb?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer?.ast?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer?.blk?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer?.st?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer?.to?.toFixed(1) || "0.0"}</td>
+                {/* The "--" allows us to call the function even when the item.myPlayers do not exist yet */}
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "points") : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "rebounds") : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "assists") : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "blocks") : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "steals") : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "turnovers") : "--"}</td>
 
                 {/* Position */}
                 <td>{item.position}</td>
