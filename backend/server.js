@@ -1861,8 +1861,8 @@ app.post('/api/leagues/:leagueId/draft/pick', authenticate, async (req, res) => 
     
     console.log(`Current team to pick: ${currentTeamId}, requesting user: ${userId}`);
     
-    // Check if it's this user's turn
-    if (currentTeamId !== userId) {
+    // Ensure both are numbers for comparison
+    if (Number(currentTeamId) !== Number(userId)) {
       return res.status(403).json({ error: "It's not your turn to pick" });
     }
     

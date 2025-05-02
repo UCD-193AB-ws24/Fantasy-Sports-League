@@ -51,8 +51,9 @@ const DraftBoard = () => {
 
 
    socketRef.current.on('draft-update', (draftData) => {
+     console.log('Draft update:', draftData);
      setDraftState(draftData);
-    
+
      // Check if it's the current user's turn
      if (user && draftData.currentTeam?.userId === user.id) {
        setCurrentUserTurn(true);
@@ -63,12 +64,13 @@ const DraftBoard = () => {
 
 
    socketRef.current.on('pick-made', (pickData) => {
+     console.log('Pick made:', pickData);
      // Update the draft picks
      setDraftState(prev => ({
        ...prev,
        picks: [...prev.picks, pickData]
      }));
-    
+     
      // Remove player from queue if present
      setQueue(prev => prev.filter(player => player.id !== pickData.playerId));
    });
@@ -82,11 +84,11 @@ const DraftBoard = () => {
    socketRef.current.on('draft-completed', () => {
     setDraftState(prev => ({ ...prev, status: 'completed' }));
     // Show completion message
-    alert("Draft completed! Redirecting to league page...");
+    // alert("Draft completed! Redirecting to league page...");
     // Navigate after a brief delay
-    setTimeout(() => {
-      navigate(`/leagues/${leagueId}`);
-    }, 3000);
+    // setTimeout(() => {
+    //   navigate(`/leagues/${leagueId}`);
+    // }, 3000);
   });
   
 
@@ -107,13 +109,25 @@ const DraftBoard = () => {
  useEffect(() => {
    if (draftState.status === 'in_progress' && draftState.pickTimeRemaining > 0) {
      timerRef.current = setInterval(() => {
-       setDraftState(prev => ({
-         ...prev,
-         pickTimeRemaining: Math.max(0, prev.pickTimeRemaining - 1)
-       }));
+       setDraftState(prev => {
+         const newTimeRemaining = Math.max(0, prev.pickTimeRemaining - 1);
+         
+         // If timer reaches 0, trigger a refresh
+         if (newTimeRemaining === 0) {
+           // Clear the interval
+           clearInterval(timerRef.current);
+           
+           // Force a refresh of draft data
+           loadDraftData();
+         }
+         
+         return {
+           ...prev,
+           pickTimeRemaining: newTimeRemaining
+         };
+       });
      }, 1000);
    }
-
 
    return () => {
      if (timerRef.current) {
@@ -154,17 +168,17 @@ const DraftBoard = () => {
    setFilteredPlayers(filtered);
  }, [allPlayers, searchTerm, selectedTeam, selectedPosition, draftState.picks]);
 
- useEffect(() => {
-    // Redirect when draft is completed
-    if (draftState.status === 'completed') {
-      // Wait a few seconds to let the user see the completion message
-      const redirectTimer = setTimeout(() => {
-        navigate(`/leagues/${leagueId}`);
-      }, 3000);
+//  useEffect(() => {
+//     // Redirect when draft is completed
+//     if (draftState.status === 'completed') {
+//       // Wait a few seconds to let the user see the completion message
+//       const redirectTimer = setTimeout(() => {
+//         navigate(`/leagues/${leagueId}`);
+//       }, 3000);
       
-      return () => clearTimeout(redirectTimer);
-    }
-  }, [draftState.status, leagueId, navigate]);
+//       return () => clearTimeout(redirectTimer);
+//     }
+//   }, [draftState.status, leagueId, navigate]);
 
 
  const loadDraftData = async () => {

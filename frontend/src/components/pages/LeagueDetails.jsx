@@ -347,7 +347,6 @@ const LeagueDetails = () => {
                     />
                   </div>
                   
-                  // Continuing from where we left off in the settings tab
                   <div className="LD_form-group LD_checkbox-group">
                     <label htmlFor="isPrivate" className="LD_checkbox-label">
                       <input
