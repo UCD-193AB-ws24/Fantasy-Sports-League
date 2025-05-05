@@ -538,7 +538,9 @@ app.get('/api/roster/:userId', authenticate, async (req, res) => {
     
     // Get user roster or create empty roster if none exists
     let roster = await prisma.roster.findFirst({
-      where: { userId },
+      where: { userId,
+        // leagueId: { not: null },
+       },
       include: { 
           players: {
             include: { 
@@ -1203,7 +1205,7 @@ app.get('/api/leagues/user', authenticate, async (req, res) => {
         users: true
       }
     });
-    
+    console.log(leagues);
     res.json(leagues);
   } catch (error) {
     console.error("Error fetching user leagues:", error);
@@ -1358,6 +1360,48 @@ app.get('/api/user/getUserName', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/roster/forBots/:userId/playerNames', async (req, res) => {
+  const userId = parseInt(req.params.userId);
+  const roster = await prisma.roster.findFirst({
+    where: { userId },
+    include: {
+      players: {
+        select: {
+          position: true,
+          player: {
+            select: {
+              id: true,
+              name: true,
+              positions: true,
+              stats: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!roster) {
+    return res.status(404).json({ error: "Roster not found" });
+  }
+
+  // Extract player names
+  const playerNames = roster.players.map((rosterPlayer) => ({
+    id: rosterPlayer.player.id,
+    name: rosterPlayer.player.name,
+    position: rosterPlayer.position,
+    morePositions: rosterPlayer.player.positions,
+    stats : rosterPlayer.player.stats
+  }));
+
+  const playerTeams = roster.players.map((rosterPlayer) => ({
+    id: rosterPlayer.player.id,
+    team: rosterPlayer.player.team
+  }));
+
+  res.json({ playerNames});
+});
+
 app.get('/api/roster/:userId/playerNames', authenticate, async (req, res) => {
   try {
     const userId = req.user?.id || parseInt(req.params.userId);
@@ -1393,7 +1437,7 @@ app.get('/api/roster/:userId/playerNames', authenticate, async (req, res) => {
       team: rosterPlayer.player.team
     }));
 
-    res.json({ playerNames });
+    res.json({ playerNames, playerTeams});
   } catch (error) {
     console.error("Error fetching player names:", error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -157,27 +157,62 @@ useEffect(() => {
 const [trueDailyPoints, setTrueDailyPoints] = useState(0);
 const [trueWeeklyPoints, setTrueWeeklyPoints] = useState(0);
 
+const [trueOppDailyPoints, setOppTrueDailyPoints] = useState(0);
+const [trueWeeklyOppPoints, setTrueOppWeeklyPoints] = useState(0);
+
+const [OpponentTeams, SetOpponentTeams] = useState([]);
+const [selectedOpponentId, setSelectedOpponentId] = useState(null);
+const [currentOpps, setCurrentOpps] = useState([]);
+const [oppIds, setOppIds] = useState([]);
+const [trueOpposLayoutOnCourt, setTrueOppsLayout] = useState([]);
+const [newComparisonData, setNewComparisonData] = useState([]); 
+
 // Update data when day/week selection changes
 useEffect(() => {
-  if (!loading && myTeam.roster.length > 0 && opponentTeam.roster.length > 0) {
+  if (!loading && myTeam.roster.length > 0 && currentOpps.length > 0) {
     updateTeamLayouts();
     updateComparisonData();
     updateScores();
-    console.log("Current Week is: " ,selectedWeek);
     const weeklyPoints = weeklyPointCalculation(myTeam.roster.filter(player => player.position != "Bench"));
 
     setTrueWeeklyPoints(weeklyPoints);
-    // console.log("The weekly points in total: ", weeklyPoints);
-    // console.log(myTeam.roster.filter(player => player.position != "Bench"));
+
     const points = dailyPointCalculation(myTeam.roster.filter(player => player.position != "Bench"), formatXVersion(getSelectedDateString()));
 
     setTrueDailyPoints(points);
 
-    
+    const arrayofOpps = trueOpposLayoutOnCourt.filter(player => player.player !== null);
+    let total = 0;
+    for (const slot of arrayofOpps) {
+      const points = calcPointsToday(slot.player, getSelectedDateString());
+      total += points;
+    }
+    setOppTrueDailyPoints(total);
 
-    console.log("First initial change to true daily points: ", trueDailyPoints);
+    console.log("Begin Week Calculations...", selectedWeek);
+    console.log("Begin Week Calculations...Getting Day Within This Week");
+
+    let weeklyOppsTotal = 0;
+    let idx = 0;
+    total = 0;
+    for(const slot of arrayofOpps){
+      while(idx < 7){
+        console.log("Begin Week Calculations...Day of the Week: ", formatDate(getDateForDayInWeek([idx], selectedWeek)));
+        const points = calcPointsToday(slot.player, formatDate(getDateForDayInWeek([idx], selectedWeek)))
+        total += points;
+        idx++;
+      }
+      idx = 0;
+      const weeklyTotal = total;
+      weeklyOppsTotal += weeklyTotal;
+      total = 0;
+    }
+
+    setTrueOppWeeklyPoints(weeklyOppsTotal);
+
+    console.log("Begin Week Calculations...DONE - Here is the total: ", weeklyOppsTotal);
   }
-}, [selectedDay, selectedWeek, myTeam.roster, opponentTeam.roster, loading]);
+}, [selectedDay, selectedWeek, myTeam.roster, currentOpps, loading, selectedOpponentId]);
 
 // Set up polling for live updates
 useEffect(() => {
@@ -255,7 +290,7 @@ const loadOpponentRoster = async (opponentUserId) => {
     // Use league players endpoint instead, which isn't protected
     const leaguePlayersResponse = await axios.get(`http://localhost:5001/api/leagues/1/players`);
     
-    console.log("League players:", leaguePlayersResponse.data);
+    console.log("League players for loading opponent Roster:", leaguePlayersResponse.data);
     
     // Filter to get a diverse set of players for different positions
     const availablePlayers = leaguePlayersResponse.data.players || [];
@@ -870,25 +905,6 @@ const updateComparisonData = () => {
 
   let availablePlayers = myTeam.roster.filter(p => p.position !== "Bench").slice();
   let availableOPPlayers = opponentTeam.roster.filter(p => p.position !== "Bench").slice();
-
-  // keyPositions.forEach(pos => {
-  //   // Find players for this position in both teams
-  //   const myPlayer = findPlayerForPosition(onCourt, pos);
-  //   const oppPlayer = findPlayerForPosition(opponentTeam.roster, pos);
-    
-  //   if (myPlayer || oppPlayer) {
-  //     // Get stats for the player on the selected date
-  //     const myPlayerStats = getPlayerStatsForDate(myPlayer, formattedDate, isCurrentDay);
-  //     const oppPlayerStats = getPlayerStatsForDate(oppPlayer, formattedDate, isCurrentDay);
-      
-  //     comparison.push({
-  //       position: pos,
-  //       myPlayer: myPlayerStats,
-  //       opponentPlayer: oppPlayerStats
-  //     });
-  //   }
-  // });
-
   //NEED TO WORK ON ADJUSTING POSITIONS FOR ONLY PLAYERS ON THE COURT AND IN THE CORRECT POSITIONS 
 
   keyPositions.forEach(pos => {
@@ -926,6 +942,8 @@ const updateComparisonData = () => {
   
   setComparisonData(comparison);
 };
+
+
 
 // Find player for a specific position
 const findPlayerForPosition = (roster, position) => {
@@ -985,6 +1003,26 @@ const getPlayerStatsForDate = (player, date, isCurrentDay) => {
       };
     }
   }
+
+  if(player.stats && player.stats.length > 0){
+    console.log("HEY THIS PASSED (player date): ", player.stats[0].game_date.slice(0,10));
+    console.log("HEY THIS PASSED (real date): ", date);
+    console.log("HEY THIS PASSED (name of player): ", player.name)
+    const matchingGame = player.stats.find(game => game.game_date.slice(0,10) === date);
+
+    if(matchingGame){
+      console.log("The Matching Game is: ", matchingGame);
+      return {
+        ...player,
+        pts: matchingGame.points,
+        reb: matchingGame.rebounds,
+        ast: matchingGame.assists,
+        blk: matchingGame.blocks,
+        st: matchingGame.steals,
+        to: matchingGame.turnovers
+      };
+    }
+  }
   
   // No stats found for this date
   return {
@@ -1030,20 +1068,6 @@ const getPlayerFantasyPoints = (player) => {
       return matchingGame.fantasyPoints;
     }
   }
-  
-  // For past dates with no specific game, generate a unique but consistent score
-  // Use player ID and date to create a consistent pseudo-random value
-  if (!isDateInFuture(selectedDate)) {
-    // Create a simple hash using player ID and date
-    const playerIdNum = parseInt(player.id) || 0;
-    const dateNum = parseInt(formattedDate.replace(/-/g, ''));
-    const hash = (playerIdNum * 31 + dateNum) % 1000;
-    
-    // Generate a fantasy point value between 5 and 35
-    const basePoints = 5 + (hash % 30);
-    return basePoints.toFixed(1);
-  }
-  
   // Default
   return "0.0";
 };
@@ -1192,23 +1216,6 @@ const getSelectedDateString = () => {
   return formatDate(date);
 };
 
-// const getOppStats = async (player) => {
-//   if (!player?.name) return player;
-  
-//   try {
-//     const response = await axios.post('/api/players/getCommonPlayerInfo', {
-//       withCredentials: true,
-//       playerName: player.name
-//     });
-    
-//     const liveData = response.data;
-//     console.log("The ops current data: ", liveData);
-  
-//   } catch (error) {
-//     console.error(`Error fetching live stats for ${player.name}:`, error);
-//     return player;
-//   }
-// };
 
 const calcTest = (player) => {
   
@@ -1225,9 +1232,13 @@ const calcTest = (player) => {
 };
 
 //Calculates a Player's points for a specific day - Parameters (Player Name, Game Date)
-const calcPointsToday = (player, date) => {
-  
-  // console.log("This player's latest game stats: ",player.name + " " + player.stats[0].assists);
+const calcPointsToday = (player, date, isEnemy) => {
+  // if(isEnemy === "enemy"){
+  //   console.log("calc Test", trueOpposLayoutOnCourt);
+  //   console.log("test for opponent player in calc: ", player);
+  //   return 1;
+  // }
+  console.log("This player's latest game stats: ", player);
   const points = pointsForSNGGame(player, date, "points");
   const rebounds = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "rebounds"), "rebounds");
   const assists = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "assists"), "assists");
@@ -1246,7 +1257,8 @@ const formatXVersion = (date) => {
 
 //Finds the player's stat for a specific game
 const pointsForSNGGame = (player, theDate, thePosition) => {
-
+  //NEED TO SPECIFY BETWEEN game_date and date for(bots)
+  
   const findTheDate = player.stats.filter(stat => (stat.game_date).slice(0,10) == formatXVersion(theDate));
 
   if (findTheDate.length > 0) {
@@ -1286,6 +1298,204 @@ const weeklyPointCalculation = (PlayerList) => {
 
 }
 
+
+//Gets the list of opps in draft - MUST BE IN A LEAGUE WITH OTHER PLAYERS TO WORK
+useEffect(() => {
+  const getOpps = async() =>{
+    const leaguePlayersResponse = await axios.get(`http://localhost:5001/api/leagues/user`, {
+      withCredentials: true
+    });
+    console.log("data[0]: ", leaguePlayersResponse.data[0].users.filter(object => object.id != user.id));
+    const listofPlayers = leaguePlayersResponse.data[0].users.filter(object => object.id != user.id);
+
+    const augmentedPlayerList = listofPlayers.map(player => ({
+      id: player.id,
+      name: player.name
+    }));
+
+    setOppIds(augmentedPlayerList);
+    
+    SetOpponentTeams(leaguePlayersResponse.data[0].users.filter(object => object.id != user.id));
+  } 
+  getOpps();
+}, []);
+
+
+//Once a new team has been selected for viewing, call fetchPlayerTeams with the new Opp ID to change the currentOpps array
+useEffect(() => {
+  if(OpponentTeams.length > 0){
+    console.log("Running the selected team's roster protocol...");
+    fetchPlayerTeams(selectedOpponentId || OpponentTeams[0].id);
+  }
+}, [OpponentTeams, selectedOpponentId]);
+
+
+//Creates the current selected opponent within the draft - needs the id of the opponent (Extracted from getOpps)
+const fetchPlayerTeams = async (oppId) => {
+  try {
+    console.log("The id is: ", oppId);
+    const response = await axios.get(
+      `http://localhost:5001/api/roster/forBots/${oppId}/playerNames`,
+      { withCredentials: true }
+    );
+
+    console.log("Opponent Team (Final Structure): ", response.data.playerNames);
+    setCurrentOpps(response.data.playerNames);
+  } catch (err) {
+    console.log("Error fetchPlayersNames");
+  }
+};
+
+useEffect(() => {
+  if (currentOpps.length > 0) {
+    console.log("Running Opponent Players to Slots Protocol..");
+    // console.log("Opponent teams (current):", currentOpps);
+    setTrueOppsLayout(assignPlayersToSlots(currentOpps));    
+  }
+}, [currentOpps]);
+
+// useEffect(() => {
+//     console.log("OPPONENT LAYOUT (ORIGINAL):", opponentLayout);
+// }, [opponentLayout]);
+
+// useEffect(() => {
+
+//   console.log("myTeam LAYOUT (ORIGINAL):", myTeamLayout);
+// }, [myTeamLayout]);
+
+useEffect(() => {
+  if (currentOpps.length > 0) {
+    console.log("Running New Comparison Data Protocol...", trueOpposLayoutOnCourt);
+    setNewComparisonData(newUpdateComparisonData());    
+  }
+}, [trueOpposLayoutOnCourt, selectedDay]);
+
+function assignPlayersToSlots(players) {
+  const slots = [
+    'SF','F','PF','PG','G','SG','C-1','C-2','Util-1','Util-2'
+  ];
+  const available = [...players];
+  const assignments = [];
+
+  // helper: does this player match any of the valid positions?
+  const matches = (player, validPositions) => {
+    // primary position
+    if (validPositions.includes(player.position)) return true;
+  };
+
+  for (const position of slots) {
+    let validPositions;
+
+    if (position === 'C-1' || position === 'C-2') {
+      validPositions = ['C', 'C-1', 'C-2'];
+    } else if (position.startsWith('Util')) {
+      validPositions = players.map(p => p.position)
+        .filter((v, i, self) => self.indexOf(v) === i);
+    } else if (position === 'F') {
+      validPositions = ['F'];
+    } else if (position === 'SF') {
+      validPositions = ['SF', 'F', 'PF'];
+    } else if (position === 'PF') {
+      validPositions = ['PF', 'F', 'SF'];
+    } else if (position === 'G' || 'PG' || 'SG') {
+      validPositions = ['G', 'PG', 'SG'];
+    } 
+    else {
+      // fallback: match anything
+      validPositions = [];
+    }
+
+    // pick candidates
+    let candidates = validPositions.length
+      ? available.filter(p => matches(p, validPositions))
+      : available.slice();
+
+    // if no one matched, fall back to anyone left
+    if (candidates.length === 0) {
+      assignments.push({ position, player: null });
+      continue;
+    }
+
+    // random pick
+    const pickIndex = Math.floor(Math.random() * candidates.length);
+    const picked = candidates[pickIndex];
+
+    assignments.push({ position, player: picked });
+
+    // remove from pool
+    const removeIdx = available.findIndex(p => p.id === picked.id);
+    available.splice(removeIdx, 1);
+  }
+  console.log("assignments: ", assignments);
+
+  return assignments;
+}
+
+const newUpdateComparisonData = () => {
+  // Get the date for the selected day
+  const selectedDate = getDateForDayInWeek(selectedDay, selectedWeek);
+  const formattedDate = formatDateForAPI(selectedDate);
+  const isCurrentDay = selectedWeek === 0 && selectedDay === getDayOfWeek();
+
+  console.log("date in update date: ", getSelectedDateString());
+  console.log("Formatted date: ", formattedDate);
+  
+  // Key positions for comparison
+  const keyPositions = ["PG", "SG", "SF", "PF", "C-1"];
+  const comparison = [];
+
+  let availablePlayers = myTeam.roster.filter(p => p.position !== "Bench").slice();
+  //NEED TO WORK ON ADJUSTING POSITIONS FOR ONLY PLAYERS ON THE COURT AND IN THE CORRECT POSITIONS 
+
+  keyPositions.forEach(pos => {
+    const idx = availablePlayers.findIndex(p =>
+      p.position === pos ||
+      (p.positions && p.positions.includes(pos))
+    );
+    
+    //Function prevents players from being reused in another position
+    let myPlayerStats = null;
+    if (idx !== -1) {
+      const player = availablePlayers.splice(idx, 1)[0];
+      console.log("opPlayer my Player: ", player);
+      myPlayerStats = getPlayerStatsForDate(player, formattedDate, isCurrentDay);
+      // myPlayerStats = getPlayerStatsForDate(player, formattedDate);
+
+    }
+      console.log("Our Players: ", myPlayerStats);
+      console.log("Opponent Array: ", trueOpposLayoutOnCourt);
+
+    let opPlayerStats = null;
+    const oppIdx = trueOpposLayoutOnCourt.findIndex(p =>
+      p.position === pos || 
+      (p.positions && p.positions.includes(pos))
+    );
+    if (oppIdx !== -1)
+    {
+      const opPlayer = trueOpposLayoutOnCourt[oppIdx];
+      console.log("opPlayer: ", opPlayer.player);
+      opPlayerStats = getPlayerStatsForDate(opPlayer.player, formattedDate, isCurrentDay);
+      // opPlayerStats = getPlayerStatsForDate(opPlayer.player, formattedDate);
+
+      console.log("opPlayer stats: ", opPlayerStats);
+    }    
+  
+    if (myPlayerStats || opPlayerStats) {
+      comparison.push({
+        position: pos,
+        myPlayer:       myPlayerStats,
+        opponentPlayer: opPlayerStats
+      });
+    }
+  });
+
+  console.log("test of new comparsion: ", comparison);
+  
+ return comparison;
+};
+
+
+
 if (loading) {
   return (
     <>
@@ -1324,7 +1534,7 @@ return (
         <div className="Matchups_team-info">
           <h2>{myTeam.name}</h2>
           <h1 className="Matchups_big-score">
-            {trueDailyPoints}
+            {trueDailyPoints.toFixed(1)}
           </h1>
           <p>Week Total: {trueWeeklyPoints.toFixed(1)}</p>
           <p>Date: {getSelectedDateString()}</p>
@@ -1337,9 +1547,9 @@ return (
         <div className="Matchups_team-info">
           <h2>{opponentTeam.name}</h2>
           <h1 className="Matchups_big-score">
-            {opponentTeam.dailyPoints[selectedDay] || "0.0"}
+            {trueOppDailyPoints.toFixed(1)  || "0.0"}
           </h1>
-          <p>Week Total: {opponentTeam.totalPoints || "0.0"}</p>
+          <p>Week Total: {trueWeeklyOppPoints.toFixed(1) || "0.0"}</p>
           <p>
             {selectedWeek < 0 ? "Completed" : 
             selectedWeek > 0 ? "Upcoming" : 
@@ -1392,7 +1602,7 @@ return (
                       {/* <p>{slot.player.avgFanPts.toFixed(1)}</p> */}
                       {/* <p>Calculation of Points {calcTest(slot.player)}</p> */}
                       {/* <p> pointsForSNGGame(slot.player)}</p> */}
-                      <p>{calcPointsToday(slot.player, getSelectedDateString(), "points")}</p>
+                      {/* <p>{calcPointsToday(slot.player, getSelectedDateString()).toFixed(1)}</p> */}
 
                       <div>
                         {/* {getPlayerFantasyPoints(slot.player)} */}
@@ -1410,6 +1620,16 @@ return (
         <div className="Matchups_court-section">
           <h3>
             {opponentTeam.name} - {getSelectedDateString()}
+            <select
+              value={selectedOpponentId || ''}
+              onChange={(e) => setSelectedOpponentId(e.target.value)}
+            >
+              {oppIds.map(opponent => (
+                <option key={opponent.id} value={opponent.id}>
+                  {opponent.name}
+                </option>
+              ))}
+            </select>
           </h3>
           <div className="Matchups_court-container">
             <img
@@ -1418,7 +1638,7 @@ return (
               className="Matchups_court-image"
             />
             
-            {opponentLayout.map((slot, index) => (
+            {trueOpposLayoutOnCourt.map((slot, index) => (
               <div
                 key={index}
                 className={`Matchups_team-slot Matchups_slot-${slot.position.toLowerCase()}`}
@@ -1426,12 +1646,12 @@ return (
               >
                 <span className="Matchups_slot-label">{slot.position}</span>
                 <span className="Matchups_slot-player">
+                  {/* <p>{index}</p> */}
                   {slot.player ? (
                     <div>
                       <div>{slot.player.name}</div>
                       <div>
-                        {getPlayerFantasyPoints(slot.player)}
-                        {slot.player.isLive && <span style={{color: 'green', fontWeight: 'bold'}}> LIVE</span>}
+                        {calcPointsToday(trueOpposLayoutOnCourt[index].player, getSelectedDateString(), "enemy").toFixed(1)}
                       </div>
                     </div>
                   ) : "-"}
@@ -1468,7 +1688,7 @@ return (
             </tr>
           </thead>
           <tbody>
-            {comparisonData.map((item, index) => (
+            {newComparisonData.map((item, index) => (
               <tr key={index}>
                 {/* My player */}
                 <td style={getPlayerStyle(item.myPlayer)}>
