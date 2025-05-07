@@ -130,12 +130,12 @@ const [comparisonData, setComparisonData] = useState([]);
 const [modalPlayer, setModalPlayer] = useState(null);
 const [loading, setLoading] = useState(true);
 const [refreshTimer, setRefreshTimer] = useState(null);
-
+const [leagueId, setLeagueId] = useState(null);
 // Initialize week options
 useEffect(() => {
   // Generate options for 4 weeks back and 4 weeks forward
   const options = [];
-  for (let i = -4; i <= 4; i++) {
+  for (let i = -7; i <= 4; i++) {
     const startDate = getDateForDayInWeek(0, i); // Monday of the week
     const endDate = getDateForDayInWeek(6, i);   // Sunday of the week
     
@@ -153,7 +153,7 @@ useEffect(() => {
   if (user?.id) {
     loadTeamData();
   }
-}, [user]);
+}, [leagueId]);
 const [trueDailyPoints, setTrueDailyPoints] = useState(0);
 const [trueWeeklyPoints, setTrueWeeklyPoints] = useState(0);
 
@@ -172,12 +172,12 @@ useEffect(() => {
   if (!loading && myTeam.roster.length > 0 && currentOpps.length > 0) {
     updateTeamLayouts();
     updateComparisonData();
-    updateScores();
-    const weeklyPoints = weeklyPointCalculation(myTeam.roster.filter(player => player.position != "Bench"));
+    // updateScores();
+    const weeklyPoints = weeklyPointCalculation(myTeam.roster.filter(player => !player.isBench));
 
     setTrueWeeklyPoints(weeklyPoints);
-
-    const points = dailyPointCalculation(myTeam.roster.filter(player => player.position != "Bench"), formatXVersion(getSelectedDateString()));
+    console.log("Begin Week Calculations...CUT");
+    const points = dailyPointCalculation(myTeam.roster.filter(player => !player.isBench), formatXVersion(getSelectedDateString()));
 
     setTrueDailyPoints(points);
 
@@ -238,27 +238,26 @@ useEffect(() => {
   };
 }, [selectedWeek, selectedDay, loading, myTeam.roster.length]);
 
-// Load team data (both user and opponent)
+// Load team data
 const loadTeamData = async () => {
   setLoading(true);
   try {
-    const loggedInUserId = user.id;
-    
-    // Determine opponent user ID (if user 1 is logged in, opponent is user 2, and vice versa)
-    const opponentUserId = loggedInUserId === 1 ? 2 : 1;
-    
-    console.log("Loading data for user", loggedInUserId, "and opponent", opponentUserId);
-    
     // Load user's roster
-    const userRosterResponse = await axios.get(`http://localhost:5001/api/roster/${loggedInUserId}`, {
+    const loggedInUserId = user.id;    
+    const userRosterResponse = await axios.get(`http://localhost:5001/api/roster/${loggedInUserId}/${leagueId}`, {
       withCredentials: true
     });
-    
-    console.log("User roster response:", userRosterResponse.data);
-    
+
     // Process user's roster data
     const userRosterData = userRosterResponse.data;
     const userRoster = processRosterData(userRosterData.players || []);
+
+    //Somewhere in the code the roster is going back and forth between the "normal" roster and the league roster
+    //Hack to always load the drafted roster, which is always length 15
+    if(userRoster.length > 15){
+      loadTeamData();
+      return;
+    }    
     
     // Set team name to "My Team" regardless of what's in the database
     setMyTeam({
@@ -269,12 +268,9 @@ const loadTeamData = async () => {
       totalPoints: 0
     });
     
-    // Load game logs for user's team
-    await loadGameLogsForTeam(userRoster, setMyTeam);
-    
-    // For opponent, we need a workaround since server.js prevents accessing other users' rosters
-    await loadOpponentRoster(opponentUserId);
-    
+    // // Load game logs for user's team
+    // await loadGameLogsForTeam(userRoster, setMyTeam);
+        
     setLoading(false);
   } catch (error) {
     console.error("Error loading team data:", error);
@@ -282,93 +278,11 @@ const loadTeamData = async () => {
   }
 };
 
-// Load opponent roster with league players as a workaround
-const loadOpponentRoster = async (opponentUserId) => {
-  try {
-    console.log("Loading opponent roster");
-    
-    // Use league players endpoint instead, which isn't protected
-    const leaguePlayersResponse = await axios.get(`http://localhost:5001/api/leagues/1/players`);
-    
-    console.log("League players for loading opponent Roster:", leaguePlayersResponse.data);
-    
-    // Filter to get a diverse set of players for different positions
-    const availablePlayers = leaguePlayersResponse.data.players || [];
-    
-    // Create an opponent roster with players from the league
-    const opponentRoster = [];
-    
-    // We need one player for each position
-    const neededPositions = ["PG", "SG", "SF", "PF", "C", "PG", "SG", "SF", "PF", "C"];
-    
-    // Function to find a player for a position
-    const findPlayerForPosition = (pos) => {
-      // Find players matching the position who aren't already on the roster
-      const matchingPlayers = availablePlayers.filter(player => 
-        player.positions?.includes(pos) && 
-        !opponentRoster.some(p => p.id === player.id)
-      );
-      
-      if (matchingPlayers.length > 0) {
-        // Sort by rank to get better players first
-        matchingPlayers.sort((a, b) => (a.rank || 999) - (b.rank || 999));
-        // Take a player from first 10 to add variety
-        const index = Math.min(Math.floor(Math.random() * 10), matchingPlayers.length - 1);
-        return matchingPlayers[index];
-      }
-      return null;
-    };
-    
-    // Build the opponent roster
-    for (const position of neededPositions) {
-      const player = findPlayerForPosition(position);
-      if (player) {
-        // Add position info to the player
-        const processedPlayer = {
-          ...player,
-          position: position,
-          allowedPositions: determineAllowedPositions([position]),
-          avgFanPts: player.avgFanPts || (Math.random() * 20 + 10).toFixed(1), // Random avg between 10-30
-          isLive: false,
-          currentStats: null,
-          gameLogs: []
-        };
-        
-        opponentRoster.push(processedPlayer);
-      }
-    }
-    
-    console.log("Created opponent roster:", opponentRoster);
-    
-    // Update opponent team state with hard-coded name
-    setOpponentTeam({
-      name: "Opponent Team",
-      userId: opponentUserId,
-      roster: opponentRoster,
-      dailyPoints: {},
-      totalPoints: 0
-    });
-    
-    // Load game logs for opponent's team
-    await loadGameLogsForTeam(opponentRoster, setOpponentTeam);
-    
-  } catch (error) {
-    console.error("Error creating opponent roster:", error);
-    // Set a default opponent roster in case of error
-    setOpponentTeam({
-      name: "Opponent Team",
-      userId: opponentUserId,
-      roster: [],
-      dailyPoints: {},
-      totalPoints: 0
-    });
-  }
-};
-
 // Process roster data
 const processRosterData = (rosterPlayers) => {
   return rosterPlayers.map(rp => ({
     ...rp.player,
+    isBench: rp.isBench,
     position: rp.position || "",
     allowedPositions: determineAllowedPositions(rp.player.positions || []),
     avgFanPts: rp.player.avgFanPts || 0,
@@ -409,144 +323,6 @@ const determineAllowedPositions = (positions) => {
   return allowedPositions;
 };
 
-// Load game logs for a team
-const loadGameLogsForTeam = async (roster, setTeamFunction) => {
-  console.log(`Loading game logs for ${roster.length} players`);
-  
-  // Create fake game logs for selected dates
-  const createFakeGameLogs = (player) => {
-    const logs = [];
-    
-    // Create games for past 14 days
-    for (let i = 0; i < 14; i++) {
-      const gameDate = new Date();
-      gameDate.setDate(gameDate.getDate() - i);
-      
-      // Skip some days randomly to simulate days without games
-      if (Math.random() < 0.4 && i > 0) continue;
-      
-      const dateString = `${gameDate.getMonth() + 1}/${gameDate.getDate()}/${gameDate.getFullYear()}`;
-      const apiDate = formatDateForAPI(gameDate);
-      
-      // Random stats based on position
-      let pts, reb, ast, st, blk, to;
-      
-      if (player.position === "PG" || player.position === "SG" || player.position === "G") {
-        // Guards tend to score more and assist more
-        pts = Math.floor(Math.random() * 15) + 10; // 10-25 points
-        reb = Math.floor(Math.random() * 5) + 1;   // 1-6 rebounds
-        ast = Math.floor(Math.random() * 7) + 3;   // 3-10 assists
-        st = Math.floor(Math.random() * 3) + 1;    // 1-4 steals
-        blk = Math.floor(Math.random() * 1);       // 0-1 blocks
-        to = Math.floor(Math.random() * 3) + 1;    // 1-4 turnovers
-      } else if (player.position === "SF" || player.position === "PF" || player.position === "F") {
-        // Forwards balanced scoring and rebounding
-        pts = Math.floor(Math.random() * 12) + 8;  // 8-20 points
-        reb = Math.floor(Math.random() * 6) + 4;   // 4-10 rebounds
-        ast = Math.floor(Math.random() * 4) + 1;   // 1-5 assists
-        st = Math.floor(Math.random() * 2) + 1;    // 1-3 steals
-        blk = Math.floor(Math.random() * 2) + 1;   // 1-3 blocks
-        to = Math.floor(Math.random() * 2) + 1;    // 1-3 turnovers
-      } else {
-        // Centers rebound and block more
-        pts = Math.floor(Math.random() * 10) + 6;  // 6-16 points
-        reb = Math.floor(Math.random() * 7) + 6;   // 6-13 rebounds
-        ast = Math.floor(Math.random() * 3);       // 0-3 assists
-        st = Math.floor(Math.random() * 1);        // 0-1 steals
-        blk = Math.floor(Math.random() * 3) + 1;   // 1-4 blocks
-        to = Math.floor(Math.random() * 2) + 1;    // 1-3 turnovers
-      }
-      
-      // Calculate fantasy points
-      const fantasyPoints = 
-        pts + 
-        reb * 1.2 + 
-        ast * 1.5 + 
-        st * 2 + 
-        blk * 2 - 
-        to * 0.5;
-      
-      logs.push({
-        date: dateString,
-        apiDate: apiDate,
-        matchup: "vs OPP",
-        pts: pts,
-        reb: reb,
-        ast: ast,
-        st: st,
-        blk: blk,
-        to: to,
-        fantasyPoints: fantasyPoints.toFixed(1)
-      });
-    }
-    
-    return logs;
-  };
-  
-  // Process each player
-  for (let i = 0; i < roster.length; i++) {
-    const player = roster[i];
-    if (!player) continue;
-    
-    try {
-      // Try to get real game logs from API
-      const response = await axios.post('/api/players/getPlayerGameLog', {
-        playerName: player.name,
-        season: "2023-24" // Current NBA season
-      });
-      
-      if (response.data && response.data.games && response.data.games.length > 0) {
-        console.log(`Got ${response.data.games.length} game logs for ${player.name}`);
-        
-        // Process real game logs
-        const processedLogs = response.data.games.map(game => {
-          // Calculate fantasy points
-          const fantasyPoints = 
-            (parseFloat(game.points) || 0) + 
-            (parseFloat(game.rebounds) || 0) * 1.2 + 
-            (parseFloat(game.assists) || 0) * 1.5 + 
-            (parseFloat(game.steals) || 0) * 2 + 
-            (parseFloat(game.blocks) || 0) * 2 - 
-            (parseFloat(game.turnovers) || 0) * 0.5;
-          
-          // Format date for matching
-          const apiDate = convertNBADateFormat(game.date);
-          
-          return {
-            date: game.date,
-            apiDate: apiDate,
-            matchup: game.matchup,
-            pts: parseFloat(game.points) || 0,
-            reb: parseFloat(game.rebounds) || 0,
-            ast: parseFloat(game.assists) || 0,
-            st: parseFloat(game.steals) || 0,
-            blk: parseFloat(game.blocks) || 0,
-            to: parseFloat(game.turnovers) || 0,
-            fantasyPoints: fantasyPoints.toFixed(1)
-          };
-        });
-        
-        // Update player's game logs
-        player.gameLogs = processedLogs;
-      } else {
-        // If no real game logs, create fake ones
-        console.log(`No game logs found for ${player.name}, creating fake data`);
-        player.gameLogs = createFakeGameLogs(player);
-      }
-    } catch (error) {
-      console.error(`Error loading game logs for ${player.name}:`, error);
-      // Create fake data on error
-      player.gameLogs = createFakeGameLogs(player);
-    }
-  }
-  
-  // Update team state
-  setTeamFunction(prev => ({
-    ...prev,
-    roster: [...prev.roster] // Trigger update since objects inside were modified
-  }));
-};
-
 // Update live stats for the current day
 const updateLiveStats = async () => {
   const selectedDate = getDateForDayInWeek(selectedDay, selectedWeek);
@@ -585,7 +361,7 @@ const updateLiveStats = async () => {
     
     updateTeamLayouts();
     updateComparisonData();
-    updateScores();
+    // updateScores();
     return;
   }
   
@@ -753,7 +529,7 @@ const updateLiveStats = async () => {
   // Update layouts and comparison data with fresh stats
   updateTeamLayouts();
   updateComparisonData();
-  updateScores();
+  // updateScores();
 };
 
 // Update a player's live stats
@@ -820,8 +596,7 @@ const updateTeamLayouts = () => {
   
   //Error in layout - Original code loads every player in a user's collection, but we want only the players on the court 
   //Fix - 4/27
-  const onCourt = myTeam.roster.filter(player => player.position !== "Bench");
-
+  const onCourt = myTeam.roster.filter(player => !player.isBench);
 
   // Create empty layouts
   const myLayout = positions.map(pos => ({ position: pos, player: null }));
@@ -829,7 +604,6 @@ const updateTeamLayouts = () => {
   
   // Fill layouts with players based on positions
   onCourt.forEach(player => {
-    console.log(player.name + " " + player.position);
     if (!player) return;
     
     // First try to match exact position
@@ -845,18 +619,18 @@ const updateTeamLayouts = () => {
     }
     
     // Then try allowed positions
-    // if (player.allowedPositions && player.allowedPositions.length > 0) {
-    //   for (const pos of player.allowedPositions) {
-    //     const compatibleSlot = myLayout.find(slot => 
-    //       slot.position === pos && !slot.player
-    //     );
+    if (player.allowedPositions && player.allowedPositions.length > 0) {
+      for (const pos of player.allowedPositions) {
+        const compatibleSlot = myLayout.find(slot => 
+          slot.position === pos && !slot.player
+        );
         
-    //     if (compatibleSlot) {
-    //       compatibleSlot.player = player;
-    //       return;
-    //     }
-    //   }
-    // }
+        if (compatibleSlot) {
+          compatibleSlot.player = player;
+          return;
+        }
+      }
+    }
   });
   
   // Same for opponent layout
@@ -874,24 +648,25 @@ const updateTeamLayouts = () => {
     }
     
     // Then try allowed positions
-    // if (player.allowedPositions && player.allowedPositions.length > 0) {
-    //   for (const pos of player.allowedPositions) {
-    //     const compatibleSlot = opLayout.find(slot => 
-    //       slot.position === pos && !slot.player
-    //     );
+    if (player.allowedPositions && player.allowedPositions.length > 0) {
+      for (const pos of player.allowedPositions) {
+        const compatibleSlot = opLayout.find(slot => 
+          slot.position === pos && !slot.player
+        );
         
-    //     if (compatibleSlot) {
-    //       compatibleSlot.player = player;
-    //       return;
-    //     }
-    //   }
-    // }
+        if (compatibleSlot) {
+          compatibleSlot.player = player;
+          return;
+        }
+      }
+    }
   });
   
   setMyTeamLayout(myLayout);
   setOpponentLayout(opLayout);
 };
 
+//Will not present some rows due to both User and Opponent Team not having players for that particular position - not a bug
 // Update player comparison data
 const updateComparisonData = () => {
   // Get the date for the selected day
@@ -900,9 +675,10 @@ const updateComparisonData = () => {
   const isCurrentDay = selectedWeek === 0 && selectedDay === getDayOfWeek();
   
   // Key positions for comparison
-  const keyPositions = ["PG", "SG", "SF", "PF", "C-1"];
+  const keyPositions = [
+    "PG", "SG", "G", "SF", "PF", "F", "C-1", "C-2", "Util-1", "Util-2"
+  ];
   const comparison = [];
-
   let availablePlayers = myTeam.roster.filter(p => p.position !== "Bench").slice();
   let availableOPPlayers = opponentTeam.roster.filter(p => p.position !== "Bench").slice();
   //NEED TO WORK ON ADJUSTING POSITIONS FOR ONLY PLAYERS ON THE COURT AND IN THE CORRECT POSITIONS 
@@ -941,33 +717,6 @@ const updateComparisonData = () => {
   });
   
   setComparisonData(comparison);
-};
-
-
-
-// Find player for a specific position
-const findPlayerForPosition = (roster, position) => {
-  // First try exact match
-  const exactMatch = roster.find(p => 
-    p?.positions?.includes(position) || p?.position === position
-  );
-  
-  if (exactMatch) return exactMatch;
-  
-  // Check for compatible positions
-  if (position === "PG" || position === "SG") {
-    return roster.find(p => p?.position === "G");
-  }
-  
-  if (position === "SF" || position === "PF") {
-    return roster.find(p => p?.position === "F");
-  }
-  
-  if (position === "C-1") {
-    return roster.find(p => p?.position === "C-1" || p?.position === "C-2");
-  }
-  
-  return null;
 };
 
 // Get player stats for a specific date
@@ -1072,112 +821,6 @@ const getPlayerFantasyPoints = (player) => {
   return "0.0";
 };
 
-// Update total scores for both teams
-const updateScores = () => {
-  const selectedDate = getDateForDayInWeek(selectedDay, selectedWeek);
-  const formattedDate = formatDateForAPI(selectedDate);
-  const isFutureDate = isDateInFuture(selectedDate);
-  
-  console.log(`Updating scores for ${formattedDate}, isFuture: ${isFutureDate}`);
-  
-  // All scores for future dates should be 0
-  if (isFutureDate) {
-    setMyTeam(prev => {
-      const updatedDailyPoints = { ...prev.dailyPoints };
-      updatedDailyPoints[selectedDay] = "0.0";
-      
-      // Calculate weekly total (only count non-future days)
-      let weeklyTotal = 0;
-      for (let i = 0; i < 7; i++) {
-        const dayDate = getDateForDayInWeek(i, selectedWeek);
-        if (!isDateInFuture(dayDate)) {
-          weeklyTotal += parseFloat(updatedDailyPoints[i] || 0);
-        }
-      }
-      
-      return {
-        ...prev,
-        dailyPoints: updatedDailyPoints,
-        totalPoints: weeklyTotal.toFixed(1)
-      };
-    });
-    
-    setOpponentTeam(prev => {
-      const updatedDailyPoints = { ...prev.dailyPoints };
-      updatedDailyPoints[selectedDay] = "0.0";
-      
-      // Calculate weekly total (only count non-future days)
-      let weeklyTotal = 0;
-      for (let i = 0; i < 7; i++) {
-        const dayDate = getDateForDayInWeek(i, selectedWeek);
-        if (!isDateInFuture(dayDate)) {
-          weeklyTotal += parseFloat(updatedDailyPoints[i] || 0);
-        }
-      }
-      
-      return {
-        ...prev,
-        dailyPoints: updatedDailyPoints,
-        totalPoints: weeklyTotal.toFixed(1)
-      };
-    });
-    
-    return;
-  }
-  
-  // Calculate daily points for my team from past or current dates
-  let myTeamDailyTotal = 0;
-  myTeam.roster.forEach(player => {
-    myTeamDailyTotal += parseFloat(getPlayerFantasyPoints(player) || 0);
-  });
-  
-  // Calculate daily points for opponent team
-  let opponentDailyTotal = 0;
-  opponentTeam.roster.forEach(player => {
-    opponentDailyTotal += parseFloat(getPlayerFantasyPoints(player) || 0);
-  });
-  
-  // Update team states with daily points
-  setMyTeam(prev => {
-    const updatedDailyPoints = { ...prev.dailyPoints };
-    updatedDailyPoints[selectedDay] = myTeamDailyTotal.toFixed(1);
-    
-    // Calculate weekly total
-    let weeklyTotal = 0;
-    for (let i = 0; i < 7; i++) {
-      const dayDate = getDateForDayInWeek(i, selectedWeek);
-      if (!isDateInFuture(dayDate)) {
-        weeklyTotal += parseFloat(updatedDailyPoints[i] || 0);
-      }
-    }
-    return {
-      ...prev,
-      dailyPoints: updatedDailyPoints,
-      totalPoints: weeklyTotal.toFixed(1)
-    };
-  });
-  
-  setOpponentTeam(prev => {
-    const updatedDailyPoints = { ...prev.dailyPoints };
-    updatedDailyPoints[selectedDay] = opponentDailyTotal.toFixed(1);
-    
-    // Calculate weekly total
-    let weeklyTotal = 0;
-    for (let i = 0; i < 7; i++) {
-      const dayDate = getDateForDayInWeek(i, selectedWeek);
-      if (!isDateInFuture(dayDate)) {
-        weeklyTotal += parseFloat(updatedDailyPoints[i] || 0);
-      }
-    }
-    
-    return {
-      ...prev,
-      dailyPoints: updatedDailyPoints,
-      totalPoints: weeklyTotal.toFixed(1)
-    };
-  });
-};
-
 // Style for player slots based on status
 const getPlayerStyle = (player) => {
   if (!player) return {};
@@ -1233,12 +876,6 @@ const calcTest = (player) => {
 
 //Calculates a Player's points for a specific day - Parameters (Player Name, Game Date)
 const calcPointsToday = (player, date, isEnemy) => {
-  // if(isEnemy === "enemy"){
-  //   console.log("calc Test", trueOpposLayoutOnCourt);
-  //   console.log("test for opponent player in calc: ", player);
-  //   return 1;
-  // }
-  console.log("This player's latest game stats: ", player);
   const points = pointsForSNGGame(player, date, "points");
   const rebounds = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "rebounds"), "rebounds");
   const assists = calcSpecificFantasyPoints(pointsForSNGGame(player, date, "assists"), "assists");
@@ -1282,20 +919,13 @@ const dailyPointCalculation = (PlayerList, theDate) => {
 
 //Get Player list, traverse the set of days, and calculate points for every player that played that week
 const weeklyPointCalculation = (PlayerList) => {
-  // console.log(formatXVersion(formatDate(getDateForDayInWeek(0, 0))));
-  // console.log("LAST DAY IS: ", formatXVersion(formatDate(getDateForDayInWeek(6, 0))));
-
   let weekTotal = 0;
-
   //For each day of this current week
-  for(let idx = 0 ; idx < PlayerList.length; idx++){
-    // console.log("Day of the Week: ", formatXVersion(formatDate(getDateForDayInWeek([idx], selectedWeek))))
+  for(let idx = 0 ; idx < 7; idx++){
     let today = formatXVersion(formatDate(getDateForDayInWeek([idx], selectedWeek)));
-    weekTotal += dailyPointCalculation(PlayerList, today);
+    weekTotal += dailyPointCalculation(PlayerList, today);    
   }
-
   return weekTotal;
-
 }
 
 
@@ -1305,7 +935,10 @@ useEffect(() => {
     const leaguePlayersResponse = await axios.get(`http://localhost:5001/api/leagues/user`, {
       withCredentials: true
     });
-    console.log("data[0]: ", leaguePlayersResponse.data[0].users.filter(object => object.id != user.id));
+    const myPlayers = leaguePlayersResponse.data[0].users.filter(object => object.id === user.id);
+
+    setLeagueId(myPlayers[0].leagueId);
+
     const listofPlayers = leaguePlayersResponse.data[0].users.filter(object => object.id != user.id);
 
     const augmentedPlayerList = listofPlayers.map(player => ({
@@ -1324,7 +957,6 @@ useEffect(() => {
 //Once a new team has been selected for viewing, call fetchPlayerTeams with the new Opp ID to change the currentOpps array
 useEffect(() => {
   if(OpponentTeams.length > 0){
-    console.log("Running the selected team's roster protocol...");
     fetchPlayerTeams(selectedOpponentId || OpponentTeams[0].id);
   }
 }, [OpponentTeams, selectedOpponentId]);
@@ -1333,13 +965,11 @@ useEffect(() => {
 //Creates the current selected opponent within the draft - needs the id of the opponent (Extracted from getOpps)
 const fetchPlayerTeams = async (oppId) => {
   try {
-    console.log("The id is: ", oppId);
     const response = await axios.get(
       `http://localhost:5001/api/roster/forBots/${oppId}/playerNames`,
       { withCredentials: true }
     );
 
-    console.log("Opponent Team (Final Structure): ", response.data.playerNames);
     setCurrentOpps(response.data.playerNames);
   } catch (err) {
     console.log("Error fetchPlayersNames");
@@ -1348,24 +978,12 @@ const fetchPlayerTeams = async (oppId) => {
 
 useEffect(() => {
   if (currentOpps.length > 0) {
-    console.log("Running Opponent Players to Slots Protocol..");
-    // console.log("Opponent teams (current):", currentOpps);
     setTrueOppsLayout(assignPlayersToSlots(currentOpps));    
   }
 }, [currentOpps]);
 
-// useEffect(() => {
-//     console.log("OPPONENT LAYOUT (ORIGINAL):", opponentLayout);
-// }, [opponentLayout]);
-
-// useEffect(() => {
-
-//   console.log("myTeam LAYOUT (ORIGINAL):", myTeamLayout);
-// }, [myTeamLayout]);
-
 useEffect(() => {
   if (currentOpps.length > 0) {
-    console.log("Running New Comparison Data Protocol...", trueOpposLayoutOnCourt);
     setNewComparisonData(newUpdateComparisonData());    
   }
 }, [trueOpposLayoutOnCourt, selectedDay]);
@@ -1377,7 +995,6 @@ function assignPlayersToSlots(players) {
   const available = [...players];
   const assignments = [];
 
-  // helper: does this player match any of the valid positions?
   const matches = (player, validPositions) => {
     // primary position
     if (validPositions.includes(player.position)) return true;
@@ -1401,28 +1018,23 @@ function assignPlayersToSlots(players) {
       validPositions = ['G', 'PG', 'SG'];
     } 
     else {
-      // fallback: match anything
       validPositions = [];
     }
 
-    // pick candidates
     let candidates = validPositions.length
       ? available.filter(p => matches(p, validPositions))
       : available.slice();
 
-    // if no one matched, fall back to anyone left
     if (candidates.length === 0) {
       assignments.push({ position, player: null });
       continue;
     }
 
-    // random pick
     const pickIndex = Math.floor(Math.random() * candidates.length);
     const picked = candidates[pickIndex];
 
     assignments.push({ position, player: picked });
 
-    // remove from pool
     const removeIdx = available.findIndex(p => p.id === picked.id);
     available.splice(removeIdx, 1);
   }
@@ -1437,33 +1049,27 @@ const newUpdateComparisonData = () => {
   const formattedDate = formatDateForAPI(selectedDate);
   const isCurrentDay = selectedWeek === 0 && selectedDay === getDayOfWeek();
 
-  console.log("date in update date: ", getSelectedDateString());
-  console.log("Formatted date: ", formattedDate);
-  
   // Key positions for comparison
   const keyPositions = ["PG", "SG", "SF", "PF", "C-1"];
   const comparison = [];
-
-  let availablePlayers = myTeam.roster.filter(p => p.position !== "Bench").slice();
+    const availablePlayers = myTeam.roster.filter(player => !player.isBench);
+  for(const player in availablePlayers){
+  }
   //NEED TO WORK ON ADJUSTING POSITIONS FOR ONLY PLAYERS ON THE COURT AND IN THE CORRECT POSITIONS 
 
   keyPositions.forEach(pos => {
     const idx = availablePlayers.findIndex(p =>
-      p.position === pos ||
-      (p.positions && p.positions.includes(pos))
+      p.position === pos
     );
     
     //Function prevents players from being reused in another position
     let myPlayerStats = null;
     if (idx !== -1) {
-      const player = availablePlayers.splice(idx, 1)[0];
-      console.log("opPlayer my Player: ", player);
-      myPlayerStats = getPlayerStatsForDate(player, formattedDate, isCurrentDay);
+      // const player = availablePlayers.splice(idx, 1)[0];
+      myPlayerStats = getPlayerStatsForDate(availablePlayers[idx], formattedDate, isCurrentDay);
       // myPlayerStats = getPlayerStatsForDate(player, formattedDate);
 
     }
-      console.log("Our Players: ", myPlayerStats);
-      console.log("Opponent Array: ", trueOpposLayoutOnCourt);
 
     let opPlayerStats = null;
     const oppIdx = trueOpposLayoutOnCourt.findIndex(p =>
@@ -1473,11 +1079,8 @@ const newUpdateComparisonData = () => {
     if (oppIdx !== -1)
     {
       const opPlayer = trueOpposLayoutOnCourt[oppIdx];
-      console.log("opPlayer: ", opPlayer.player);
       opPlayerStats = getPlayerStatsForDate(opPlayer.player, formattedDate, isCurrentDay);
-      // opPlayerStats = getPlayerStatsForDate(opPlayer.player, formattedDate);
 
-      console.log("opPlayer stats: ", opPlayerStats);
     }    
   
     if (myPlayerStats || opPlayerStats) {
@@ -1488,8 +1091,6 @@ const newUpdateComparisonData = () => {
       });
     }
   });
-
-  console.log("test of new comparsion: ", comparison);
   
  return comparison;
 };
@@ -1536,7 +1137,7 @@ return (
           <h1 className="Matchups_big-score">
             {trueDailyPoints.toFixed(1)}
           </h1>
-          <p>Week Total: {trueWeeklyPoints.toFixed(1)}</p>
+          <p>Week Total: {trueWeeklyPoints.toFixed(1) || "0.0"}</p>
           <p>Date: {getSelectedDateString()}</p>
         </div>
         
@@ -1599,13 +1200,9 @@ return (
                   {slot.player ? (
                     <div>
                       <div>{slot.player.name}</div>
-                      {/* <p>{slot.player.avgFanPts.toFixed(1)}</p> */}
-                      {/* <p>Calculation of Points {calcTest(slot.player)}</p> */}
-                      {/* <p> pointsForSNGGame(slot.player)}</p> */}
-                      {/* <p>{calcPointsToday(slot.player, getSelectedDateString()).toFixed(1)}</p> */}
+                      <p>{calcPointsToday(slot.player, getSelectedDateString()).toFixed(1)}</p>
 
                       <div>
-                        {/* {getPlayerFantasyPoints(slot.player)} */}
                         {slot.player.isLive && <span style={{color: 'green', fontWeight: 'bold'}}> LIVE</span>}
                       </div>
                     </div>
@@ -1646,7 +1243,6 @@ return (
               >
                 <span className="Matchups_slot-label">{slot.position}</span>
                 <span className="Matchups_slot-player">
-                  {/* <p>{index}</p> */}
                   {slot.player ? (
                     <div>
                       <div>{slot.player.name}</div>
@@ -1710,12 +1306,12 @@ return (
                   ) : "N/A"}
                 </td>
                 {/* The "--" allows us to call the function even when the item.myPlayers do not exist yet */}
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "points") : "--"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "rebounds") : "--"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "assists") : "--"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "blocks") : "--"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "steals") : "--"}</td>
-                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? pointsForSNGGame(item.myPlayer, getSelectedDateString(), "turnovers") : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? item.myPlayer.pts.toFixed(0) : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? item.myPlayer.reb.toFixed(0) : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? item.myPlayer.ast.toFixed(0) : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? item.myPlayer.blk.toFixed(0) : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? item.myPlayer.st.toFixed(0) : "--"}</td>
+                <td style={getPlayerStyle(item.myPlayer)}>{item.myPlayer ? item.myPlayer.pts.toFixed(0) : "--"}</td>
 
                 {/* Position */}
                 <td>{item.position}</td>
@@ -1739,12 +1335,12 @@ return (
                     </>
                   ) : "N/A"}
                 </td>
-                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.pts?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.reb?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.ast?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.blk?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.st?.toFixed(1) || "0.0"}</td>
-                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.to?.toFixed(1) || "0.0"}</td>
+                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.pts?.toFixed(0) ||  "--"}</td>
+                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.reb?.toFixed(0) ||  "--"}</td>
+                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.ast?.toFixed(0) || "--"}</td>
+                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.blk?.toFixed(0) ||  "--"}</td>
+                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.st?.toFixed(0) ||  "--"}</td>
+                <td style={getPlayerStyle(item.opponentPlayer)}>{item.opponentPlayer?.to?.toFixed(0) ||  "--"}</td>
               </tr>
             ))}
           </tbody>

@@ -91,19 +91,6 @@ const TEAM_CONFIG = {
   Spurs:      { primary: "#000000", secondary: "#C4CED4", logo: "/NBA-TeamLogos/spurs.jpg" },
 };
 
-function extractPalette1(teamName){
-  //console.log(teamName);
-  const team = players.find(t => t.name == teamName);
-  // console.log(team.palette1);
-  return team ? team.palette1 : '000000';
-}
-
-function extractPalette2(teamName){
- // console.log(teamName);
-  const team = players.find(t => t.name == teamName);
-  return team ? team.palette2 : '000000';
-}
-
 function getTeamImage(teamName) {
   const team = players.find(t => t.name === teamName);
   return team ? team.img : "alt.png"; // fallback image
@@ -297,8 +284,10 @@ function YourRoster() {
   const { user } = useContext(AuthContext);
   const [teamName, setTeamName] = useState("Your Roster");
   const [isEditing, setIsEditing] = useState(false);
+  const [reloadState, setReloadState] = useState(false);
+  const [leagueId, setLeagueId] = useState(0);
+  const [leagueRoster, setLeagueRoster] = useState([]);
   
-
   const userId = user?.id;
 
   // Utility function to create a safe file name from player name
@@ -307,8 +296,27 @@ function YourRoster() {
   };
 
   useEffect(() => {
+    getLeagueId();
+    getLeagueRoster();
+  }, [leagueId]);
+
+  useEffect(() => {
     loadRoster();
-  }, []);
+  }, [reloadState, leagueRoster]);
+
+const getLeagueId = async () => {
+  const leaguePlayersResponse = await axios.get(`http://localhost:5001/api/leagues/user`, {
+    withCredentials: true
+  });
+  setLeagueId(leaguePlayersResponse.data[0].id);
+}
+
+const getLeagueRoster = async () => {
+  const leaguePlayersResponse = await axios.get(`http://localhost:5001/api/roster/${userId}/${leagueId}`, {
+    withCredentials: true
+  });
+  setLeagueRoster(leaguePlayersResponse.data);
+}
 
   useEffect(() => {
     // Fetch team name if user exists
@@ -421,11 +429,15 @@ async function loadRoster() {
   setLoading(true);
   try {
     // 1) grab your roster (with the 10 most recent Stats entries)
-    const resp = await axios.get(
-      `http://localhost:5001/api/roster/${userId}`,
-      { withCredentials: true }
-    );
-    const rosterData = resp.data;
+    // const resp = await axios.get(
+    //   `http://localhost:5001/api/roster/${userId}`,
+    //   { withCredentials: true }
+    // );
+    // const rosterData = resp.data;
+    // console.log("League Rosters [original: ", rosterData);
+
+    // 1) [REVISED] Grabs League Drafted Roster 
+    const rosterData = leagueRoster;
 
     // 2) build up a flat list of “assignments” with our allowedPositions, etc.
     const assignments = rosterData.players.map(rp => {
@@ -514,7 +526,6 @@ async function loadRoster() {
 
     setTeamSlots(updatedSlots);
     setBench(benchPlayers);
-
   } catch (err) {
     console.error("Error loading roster:", err);
   } finally {
@@ -569,7 +580,7 @@ const handleDropPlayer = async (draggedPlayer, targetSlot) => {
 
     // Use the movePlayer endpoint for moving players already on the roster
     await axios.post(
-      'http://localhost:5001/api/roster/movePlayer',
+      `http://localhost:5001/api/roster/movePlayer/${leagueId}`,
       {
         userId,
         playerId: draggedPlayer.id,
@@ -592,6 +603,8 @@ const handleDropPlayer = async (draggedPlayer, targetSlot) => {
           : s
       )
     );
+    getLeagueRoster();
+    setReloadState(prev => !prev);
   } catch (error) {
     console.error('Error updating player positions:', error);
     alert(error.response?.data?.error || 'Error updating roster');
@@ -605,7 +618,7 @@ const handleReturnToBench = async (slotId) => {
 
   try {
     // Use the moveToBench API endpoint
-    await axios.post('http://localhost:5001/api/roster/moveToBench', {
+    await axios.post(`http://localhost:5001/api/roster/moveToBench/${leagueId}`, {
       userId,
       playerId: slot.player.id,
     }, {
@@ -626,8 +639,10 @@ const handleReturnToBench = async (slotId) => {
   } catch (error) {
     console.error("Error returning player to bench:", error);
     loadRoster(); // Reload roster on error
-    alert("Error moving player to bench: " (error.response?.data?.error || error.message));
-  }
+    alert(
+      "Error moving player to bench: " +
+      (error.response?.data?.error || error.message)
+    );  }
 };
 
 const handleTeamNameSubmit = async (e) => {
@@ -662,9 +677,9 @@ const handleTeamNameSubmit = async (e) => {
   };
   
   useEffect(() => { loadRoster(); }, []);
-  if (loading) {
-    return <div>Loading roster...</div>;
-  }
+  // if (loading) {
+  //   return <div>Loading roster...</div>;
+  // }
 
   return (
     <DndProvider backend={HTML5Backend}>
