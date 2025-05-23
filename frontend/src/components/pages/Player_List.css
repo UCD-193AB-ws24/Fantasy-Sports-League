@@ -1,0 +1,131 @@
+:root {
+  --primary-color: #007bff;
+  --accent-color: #0056b3;
+  --background-color: #f4f6f8;
+  --text-color: #333;
+  --white: #fff;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.PL_container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.PL_header {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--text-color);
+}
+
+/* Unified Filters & Search Container */
+.PL_filtersContainer {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.PL_filtersContainer select,
+.PL_filtersContainer input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Table container (card-style) */
+.PL_table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--white);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;  
+
+}
+
+.PL_table th {
+  background: #36454F;
+  color: var(--white);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* New photo column: reserve 80px and center its content */
+.PL_colPhoto {
+  width: 80px;
+  text-align: center;
+}
+
+.PL_table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
+}
+
+.PL_table tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.PL_table tr:hover {
+  background: #e9f2fb;
+}
+
+/* Original column classes (unchanged) */
+.PL_colRank { width: 5%; }
+.PL_colName { width: 40%; }
+.PL_colTeam { width: 20%; }
+.PL_colPosition { width: 20%; }
+.PL_colInfo { width: 15%; }
+
+/* Button styles */
+.PL_infoButton {
+  background-color: #007bff;
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.PL_infoButton:hover {
+  background-color: #0056b3;
+}
+
+.PL_addButton {
+  background-color: #4CAF50;
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.PL_addButton:hover {
+  background-color: #45a049;
+}
+
+.PL_onRoster {
+  color: #777;
+  font-style: italic;
+  padding: 0.5rem 0;
+  display: inline-block;
+}

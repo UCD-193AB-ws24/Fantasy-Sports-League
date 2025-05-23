@@ -1,0 +1,44 @@
+.profile-details.mx-auto {
+  text-align: center;
+}
+
+.profile-details.mx-auto .title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.profile-info {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.team-name-section .lead {
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.button-23 {
+  font-size: 1.1rem;  
+  padding: 0.5rem 0.75rem; 
+  background-color: transparent;
+}
+.button-23:hover {
+  background-color: #D3D3D3;
+  color: black;
+}
+.button-49 {
+  background-color: transparent;
+  border: 2px solid #dc3545;   /* bootstrap “danger” red */
+  color: #dc3545;
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 1.1rem;  
+  padding: 0.5rem 0.75rem; 
+}
+.button-49:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+.profile-message {
+  color: #28a745;      /* green success text */
+  font-weight: 500;
+  margin-bottom: 1rem;
+}

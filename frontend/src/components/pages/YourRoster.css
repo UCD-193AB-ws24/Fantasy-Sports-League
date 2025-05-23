@@ -1,0 +1,406 @@
+
+.YR_title {
+  margin: 1rem;
+  text-align: center;
+  color: black;
+  font-weight: bold;
+  font-size: 60px;
+}
+
+/* Centering the court container with flex */
+.YR_court-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.rosterpage-editteam-form{
+  display: flex;
+  position: relative;
+  left: 47%;
+}
+
+/* The court container shrink-wraps the image */
+.YR_court-container {
+  position: relative;
+  display: inline-block;
+  width: 90%;
+  height:auto;
+  border: 15px solid transparent;
+  border-image: linear-gradient(45deg, #FFA500, #FF0000) 1;
+  border-image-slice: 1;
+}
+
+/* Court image */
+.YR_court-image {
+  display: block;
+  width: 100%;  /* Adjust as needed */
+  height: 80vh;
+}
+
+/* Team slots positioned over the court image */
+.YR_team-slot {
+  position: absolute;
+  width: 100px;
+  height: 90px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  /* transition: background 0.2s, transform 0.2s, border 0.2s; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Example slot positions (adjust as desired) */
+.slot-pg {
+  top: 20%;
+  left: 35%;
+}
+
+.slot-sg {
+  bottom: 20%;
+  left: 35%;
+}
+
+.slot-g {
+  top: 20%;
+  right: 35%;
+}
+
+.slot-sf {
+  top: 15%;
+  left: 18%;
+}
+
+.slot-pf {
+  bottom: 15%;
+  left: 18%;
+}
+
+.slot-f {
+  top: 15%;
+  right: 18%;
+}
+
+.slot-c-1 {
+  top: 45%;
+  left: 5%;
+}
+
+.slot-c-2 {
+  top: 45%;
+  right: 5%;
+}
+
+.slot-util-1 {
+  bottom: 20%;
+  right: 35%;
+}
+
+.slot-util-2 {
+  bottom: 15%;
+  right: 18%;
+}
+
+/* IL slots on the sideline (left side) */
+.slot-il-1 {
+  bottom: -20%;
+  left: 30%;
+}
+
+.slot-il-2 {
+  bottom: -20%;
+  left: 45%;
+}
+
+.slot-il-3 {
+  bottom: -20%;
+  left: 60%;
+}
+
+/* Slot content */
+.YR_slot-label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #000000;
+}
+
+.YR_slot-player {
+  font-size: 1rem;
+  color: #000000;
+  font-weight: bold;
+}
+
+.YR_slot-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.YR_slot-player-name {
+  cursor: pointer;
+}
+
+.YR_fantasy-points {
+  margin-top: 0.3rem;
+  padding: 3px 6px;
+  background-color: #f2f2f2;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #333;
+}
+
+/* Bench Layout */
+.YR_roster-builder {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  border-radius: 25px;
+  /* remove dark overlay and forced width */
+  /* background: rgba(0, 0, 0, 0.5); */
+  padding: 1rem;
+  justify-content: center;
+
+}
+
+.YR_roster-page {
+  display: grid;
+  padding: 0.2rem;
+  max-width: 1200px;
+  margin: 8% auto 0 auto;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.YR_bench-titlecard{
+  font-weight: bold;
+}
+
+.YR_bench {
+  flex: 1;
+  min-width: 300px;
+}
+
+.YR_bench h2 {
+  color: #0077ff;
+  margin-bottom: 0.5rem;
+}
+
+.YR_bench-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+.YR_bench-item{
+  border-radius: 25px;
+  background: white;
+  flex: 10% 0 15%;
+}
+
+
+
+.YR_player-expanded-card {
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto auto;
+  align-items: normal;
+  border-radius: 5px;
+  width: 140%;
+  height: 20vh;
+  padding-left:10px;
+  padding-right:10px;
+
+  background: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scale(1.5);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  z-index: 10;
+  pointer-events: none;
+}
+
+
+.YR_player-portrait {
+  width: 100%;
+  height: fit-content;
+  border-radius: 4px;
+}
+
+.YR_player-expanded-upper{
+  display: flex;
+  margin-top: 15px;
+  width: fit-content;
+  height: auto;
+  /* background-color: #e5e5f7; */
+}
+
+
+
+.YR_player-expanded-ranking{
+  position: absolute;
+  font-weight: bold;
+}
+
+.YR_player-expanded-lower{
+  width: 100%;
+  height: auto;
+  font-size: 12px;
+}
+
+.YR_player-name {
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+.YR_player-positions {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.2rem;
+}
+
+.YR_player-fantasy-points {
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.YR_info-btn {
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+/* Court Slot Portrait */
+.YR_court-slot-portrait {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Add to YourRoster.css */
+.YR_live-indicator {
+  color: red;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+.YR_fifa-card {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 260px;
+  background: linear-gradient(135deg, #e0c068, #f8e19f);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  color: #222;
+  cursor: grab;
+}
+.YR_fifa-card.YR_dragging { opacity: 0.5 !important; }
+
+.YR_fifa-header { display: flex; flex-direction: column; position: relative;}
+.YR_fifa-fantasy { font-size: 32px; font-weight: bold; line-height:1; }
+.YR_fifa-position { font-size: 14px; margin-bottom:4px; }
+.YR_fifa-team-logo {
+  position: absolute;
+  top: 85%;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-top: 4px;      /* space below position text */
+}
+
+.YR_fifa-body {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex:1;
+}
+.YR_fifa-portrait {
+  width: 125px;
+  border-radius:4px;
+  margin-left:8px;
+}
+
+.YR_fifa-name {
+  font-size:16px;
+  font-weight:bold;
+  text-align:center;
+}
+.YR_live-indicator {
+  margin-left:4px;
+  font-size:12px;
+  color:red;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%   { opacity:1; }
+  50%  { opacity:0.5; }
+  100% { opacity:1; }
+}
+
+.YR_fifa-stats {
+  display: grid;
+  /* three auto-sized columns; six items → two rows of three */
+  grid-template-columns: auto auto auto;
+  /* center the grid itself inside its parent */
+  justify-content: center;
+  /* spacing between cells (row-gap col-gap) */
+  gap: 4px 12px;
+  font-size: 12px;
+}
+
+.YR_fifa-stats div {
+  /* each cell is a flex row for label + value */
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* add the colon after each stat label */
+.YR_fifa-stats div span:first-child::after {
+  content: ":";
+}
+.YR_fifa-buttons {
+  display:flex;
+  gap:4px;
+}
+.YR_fifa-buttons .YR_info-btn {
+  flex:1;
+  padding:4px 0;
+  font-size:12px;
+  border-radius:4px;
+}
+.YR_bench-list .YR_fifa-card {
+  position: static !important;
+  top: auto     !important;
+  left: auto    !important;
+  transform: none!important;
+  margin: 0;
+  width: 250px;
+  height: 300px;
+}

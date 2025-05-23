@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  name      String         @db.VarChar(255)
+  email     String         @unique @db.VarChar(255)
+  picture   String?        @db.VarChar(255)
+  createdAt DateTime       @db.Timestamptz(6)
+  updatedAt DateTime?      @db.Timestamptz(6)
+  password  String         @db.VarChar(255)
+  rosterIds String[]       @db.VarChar(255)
+  leagueId  Int?
+  id        Int            @id @default(autoincrement())
+  googleID  String?        @unique
+  teamName  String?
+  roster    LeaguePlayer[] @relation("UserRoster")
+  rosters   roster[]
+  league    League?        @relation(fields: [leagueId], references: [id])
+}
+
+model Player {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  team          String?
+  positions     String[]
+  jersey        Int?
+  rank          Int?
+  gamesPlayed   Int?
+  totalFanPts   Int?
+  positionGroup String[]
+  draftPicks    DraftPick[]
+  leaguePlayers LeaguePlayer[]
+  stats         playerStats[]
+  rosterPlayers rosterPlayer[]
+}
+
+model Game {
+  id          Int           @id @default(autoincrement())
+  date        DateTime      @db.Timestamptz(6)
+  matchup     String
+  finalScore  String?
+  playerStats playerStats[]
+
+  @@unique([date, matchup], name: "date_matchup")
+}
+
+model playerStats {
+  points           Int
+  rebounds         Int
+  assists          Int
+  steals           Int
+  blocks           Int
+  turnovers        Int
+  fg               String
+  threePoint       String
+  ft               String
+  matchup          String   @db.VarChar(255)
+  game_in_progress Boolean
+  game_date        DateTime @db.Timestamptz(6)
+  fantasyPoints    Float?
+  gameId           Int
+  minutes          String?
+  playerId         Int
+  id               Int      @id @default(autoincrement())
+  game             Game     @relation(fields: [gameId], references: [id])
+  player           Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, gameId], name: "playerId_gameId")
+}
+
+model roster {
+  teamName  String         @db.VarChar(255)
+  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime       @default(now()) @db.Timestamptz(6)
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  leagueId  Int?
+  league    League?        @relation(fields: [leagueId], references: [id])
+  user      user           @relation(fields: [userId], references: [id])
+  players   rosterPlayer[]
+}
+
+model LeaguePlayer {
+  id            Int    @id @default(autoincrement())
+  leagueId      Int
+  playerId      Int
+  rosterOwnerId Int?
+  league        League @relation(fields: [leagueId], references: [id])
+  player        Player @relation(fields: [playerId], references: [id])
+  rosterOwner   user?  @relation("UserRoster", fields: [rosterOwnerId], references: [id])
+}
+
+model League {
+  id             Int            @id @default(autoincrement())
+  name           String         @db.VarChar(255)
+  commissionerId String         @db.VarChar(255)
+  createdAt      DateTime       @db.Timestamptz(6)
+  updatedAt      DateTime       @db.Timestamptz(6)
+  scoringFormat  String         @db.VarChar(255)
+  maxTeams       Int
+  draftType      String         @db.VarChar(255)
+  draftDate      DateTime?      @db.Timestamptz(6)
+  tradeDeadline  DateTime?      @db.Timestamptz(6)
+  waiverType     String         @db.VarChar(255)
+  isPrivate      Boolean        @default(true)
+  draftCompleted Boolean        @default(false)
+  draft          Draft?
+  leaguePlayers  LeaguePlayer[]
+  rosters        roster[]
+  users          user[]
+}
+
+model rosterPlayer {
+  id        Int      @id @default(autoincrement())
+  rosterId  Int
+  playerId  Int
+  position  String
+  isBench   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  player    Player   @relation(fields: [playerId], references: [id])
+  roster    roster   @relation(fields: [rosterId], references: [id])
+
+  @@unique([rosterId, playerId])
+}
+
+model Draft {
+  id                    Int         @id @default(autoincrement())
+  leagueId              Int         @unique
+  status                String      @default("NOT_STARTED")
+  draftDate             DateTime?
+  timePerPick           Int         @default(90)
+  currentRound          Int?
+  currentPickInRound    Int?
+  pickTimeRemaining     Int?
+  draftOrderType        String      @default("RANDOM")
+  draftOrder            Int[]
+  manualDraftOrder      Int[]
+  allowDraftPickTrading Boolean     @default(false)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  countdownRemaining    Int?        @default(30)
+  league                League      @relation(fields: [leagueId], references: [id])
+  picks                 DraftPick[]
+}
+
+model DraftPick {
+  id          Int      @id @default(autoincrement())
+  draftId     Int
+  userId      Int
+  playerId    Int
+  round       Int
+  pickInRound Int
+  pickNumber  Int
+  timestamp   DateTime @default(now())
+  draft       Draft    @relation(fields: [draftId], references: [id])
+  player      Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([draftId, pickNumber])
+}

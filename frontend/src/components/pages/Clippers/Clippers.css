@@ -1,0 +1,72 @@
+.Clippers-container{
+    background-image: url("clippers.jpg");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    height: 100vh;
+}
+
+.clippers-wrapper{
+    width:20%;
+      background: #0061A1;
+      padding: 2rem;
+      border-radius: 15px;
+      height:91vh;
+      width:80%;
+      margin-left: -5px;
+      margin-top: -7px;
+    }
+    .clippers-h1{
+        color: #D81D47;
+      font-size: 1.1rem;
+      font-family: sans-serif;
+    }
+    .sessions{
+      margin-top: 2rem;
+      border-radius: 12px;
+      position: relative;
+    }
+    .clippers-times{
+        font-weight: bold;
+      padding-bottom: 1.5rem;
+      border-left: 1px solid #D81D47;
+      position: relative;
+      padding-left: 20px;
+      margin-left: 0px;
+      &:last-child{
+        border: 0px;
+        padding-bottom: 0;
+      }
+      /*
+      clipp red: #D81D47
+      clip blue: #0061A1
+      clip blac: #1A1919*/
+      &:before{
+        content: '';
+        width: 15px;
+        height: 15px;
+        background: #CE1141;
+        border: 1px solid #4e5ed3;
+        box-shadow: 3px 3px 0px #963821;
+        box-shadow: 3px 3px 0px #1A1919;
+        border-radius: 50%;
+        position: absolute;
+        left: -10px;
+        top: 0px;
+      }
+    }
+    .clippers-time{
+      color: #D81D47;
+      font-family: 'Poppins', sans-serif;
+      font-weight: bold;
+    
+    }
+    .clippers-p{
+        
+      color: #1A1919;
+          font-family: sans-serif;
+      line-height: 1.5;
+      margin-top:0.4rem;
+    }

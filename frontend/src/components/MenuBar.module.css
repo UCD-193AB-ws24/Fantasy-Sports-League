@@ -1,0 +1,66 @@
+/* Force Montserrat and 18px font for the main page’s menu bar only. */
+body.profile-page #MenuBarWrapper,
+body.profile-page #MenuBarWrapper * {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 15px !important;
+}
+
+/* Rest of your module CSS */
+
+.Menu_Bar_container {
+  position: relative;
+  width: 100%;
+}
+
+.Menu_Bar_bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #292828; /* Black */
+  padding: 12px 20px;
+  color: #FFD700; /* Gold/Yellow */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.Menu_Bar_itemContainer {
+  position: relative;
+}
+
+.Menu_Bar_item {
+  text-align: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+}
+
+.Menu_Bar_item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.Menu_Bar_dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #292828;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.Menu_Bar_dropdownItem {
+  padding: 8px 15px;
+  cursor: pointer;
+  color: #FFD700;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.Menu_Bar_dropdownItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}

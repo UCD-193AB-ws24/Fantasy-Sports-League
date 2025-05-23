@@ -1,0 +1,1091 @@
+/* src/components/pages/DraftBoard.css */
+.DB_container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .DB_draft-not-started {
+    text-align: center;
+  }
+  
+  .DB_draft-info {
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  .DB_commissioner-actions {
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+  }
+  
+  .DB_button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0077cc;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_button:hover {
+    background-color: #0066b3;
+  }
+  
+  .DB_edit-button {
+    background-color: #6c757d;
+  }
+  
+  .DB_edit-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .DB_start-button {
+    background-color: #dc3545;
+  }
+  
+  .DB_start-button:hover {
+    background-color: #c82333;
+  }
+  
+  /* Draft Board Main Layout */
+  .DB_draft-board {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+    background-color: #f8f9fa;
+  }
+  
+  .DB_header {
+    background-color: #212529;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .DB_header h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  .DB_draft-status {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .DB_round-pick {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  .DB_current-team {
+    font-size: 18px;
+  }
+  
+  .DB_timer {
+    font-size: 24px;
+    font-weight: bold;
+    padding: 5px 10px;
+    background-color: #f8f9fa;
+    color: #dc3545;
+    border-radius: 4px;
+  }
+  
+  .DB_completed-message {
+    font-size: 20px;
+    font-weight: bold;
+    color: #28a745;
+  }
+  
+  .DB_content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  
+  .DB_left-panel {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #dee2e6;
+    overflow: hidden;
+  }
+  
+  .DB_right-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* Filter Section */
+  .DB_filter-section {
+    padding: 15px;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .DB_search-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .DB_filters {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .DB_filter-select {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+  }
+  
+  /* Players Section */
+  .DB_players-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+  }
+  
+  .DB_players-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .DB_players-table th,
+  .DB_players-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .DB_players-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  
+  .DB_player-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .DB_player-image {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .DB_highlighted-player {
+    background-color: #e6f7ff;
+  }
+  
+  .DB_action-button {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_draft-button {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .DB_draft-button:hover {
+    background-color: #c82333;
+  }
+  
+  .DB_queue-button {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .DB_queue-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .DB_queue-button:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+  }
+  
+  /* Queue Section */
+  .DB_queue-section {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    height: 40%;
+    overflow-y: auto;
+  }
+  
+  .DB_queue-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .DB_empty-queue {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    background-color: #e9ecef;
+    border-radius: 4px;
+  }
+  
+  .DB_queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .DB_queue-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+  }
+  
+  .DB_queue-rank {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+  
+  .DB_queue-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  
+  .DB_queue-player-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .DB_queue-player-name {
+    font-weight: bold;
+  }
+  
+  .DB_queue-player-details {
+    font-size: 12px;
+    color: #6c757d;
+  }
+  
+  .DB_queue-actions {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .DB_queue-action-button {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .DB_queue-action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .DB_remove-button {
+    color: #dc3545;
+  }
+  
+  .DB_draft-queue-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_draft-queue-button:hover {
+    background-color: #c82333;
+  }
+  
+  .DB_auto-pick-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+  }
+  
+  .DB_auto-pick-button:hover {
+    background-color: #5a6268;
+  }
+  
+  /* Picks Section */
+  .DB_picks-section {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+  }
+  
+  .DB_picks-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .DB_picks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .DB_pick-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+  }
+  
+  .DB_pick-number {
+    width: 40px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .DB_pick-team {
+    width: 100px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .DB_pick-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  
+  .DB_pick-player-image {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .DB_pick-player-name {
+    font-weight: bold;
+  }
+  
+  .DB_pick-player-details {
+    font-size: 12px;
+    color: #6c757d;
+  }
+  
+  .DB_current-pick {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+  }
+  
+  .DB_on-clock {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  
+  /* Position colors */
+  .DB_position-pg {
+    border-left: 5px solid #007bff;
+  }
+  
+  .DB_position-sg {
+    border-left: 5px solid #28a745;
+  }
+  
+  .DB_position-g {
+    border-left: 5px solid #17a2b8;
+  }
+  
+  .DB_position-sf {
+    border-left: 5px solid #ffc107;
+  }
+  
+  .DB_position-pf {
+    border-left: 5px solid #fd7e14;
+  }
+  
+  .DB_position-f {
+    border-left: 5px solid #e83e8c;
+  }
+  
+  .DB_position-c {
+    border-left: 5px solid #6f42c1;
+  }
+
+  /* Pick Highlighting Animation */
+@keyframes highlightPick {
+  0% {
+    background-color: #ffc107;
+    transform: translateY(-5px);
+  }
+  100% {
+    background-color: inherit;
+    transform: translateY(0);
+  }
+}
+
+.DB_recent-pick {
+  animation: highlightPick 2s ease-out;
+  border-left-width: 8px !important;
+}
+
+/* Picking in progress styles */
+.DB_picking-now {
+  color: #ffc107;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+.DB_spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(255, 193, 7, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffc107;
+  animation: spin 1s ease-in-out infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.DB_picking {
+  display: flex;
+  align-items: center;
+  color: #ffc107;
+  font-weight: bold;
+}
+
+/* Enhance visibility of current player on the clock */
+.DB_on-clock {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Responsive height for picks section */
+.DB_picks-list {
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+/* Style the buttons when disabled */
+.DB_button:disabled,
+.DB_action-button:disabled,
+.DB_draft-queue-button:disabled,
+.DB_auto-pick-button:disabled {
+  background-color: #6c757d;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Connection Warning */
+.DB_connection-warning {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 5px 10px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+/* Processing button styles */
+.DB_processing {
+  padding: 8px 15px;
+  background-color: #6c757d !important;
+  opacity: 0.7;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: not-allowed;
+}
+
+/* Draft progress indicator */
+.DB_draft-progress {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Table styles for drafted players */
+.DB_players-table tr.DB_drafted {
+  text-decoration: line-through;
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+/* Enhance picks list to be more readable */
+.DB_pick-item {
+  transition: all 0.3s ease;
+}
+
+.DB_pick-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.DB_draft-board {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  font-family: "Roboto", Arial, sans-serif;
+}
+
+.DB_header {
+  background-color: #1d1e20;
+  color: white;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #378ce2;
+}
+
+.DB_header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.DB_draft-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.DB_round-pick {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.DB_current-team {
+  font-size: 1rem;
+}
+
+.DB_timer {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  background-color: #1d1e20;
+  color: #ffc107;
+  border-radius: 3px;
+}
+
+/* Connection Warning */
+.DB_connection-warning {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #54102b;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+  opacity: 0.9;
+}
+
+/* ESPN-style Draft Order Boxes */
+.DB_draft-order-container {
+  background-color: #21272f;
+  padding: 10px 15px;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-bottom: 1px solid #378ce2;
+}
+
+.DB_draft-order-boxes {
+  display: flex;
+  gap: 5px;
+}
+
+.DB_draft-pick-box {
+  width: 120px;
+  height: 70px;
+  background-color: #2b2d31;
+  border-radius: 4px;
+  color: white;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-top: 3px solid #555;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.DB_pick-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.DB_pick-number {
+  font-size: 0.7rem;
+  color: #aaa;
+}
+
+.DB_bot-indicator {
+  font-size: 0.6rem;
+  background-color: #d32f2f;
+  color: white;
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+.DB_pick-box-team {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.DB_pick-box-player {
+  font-size: 0.7rem;
+  color: #bbdefb;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.DB_pick-box-on-clock {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 0.6rem;
+  color: #ffc107;
+  font-weight: bold;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.DB_current-pick-box {
+  border-top: 3px solid #ffc107;
+  background-color: #37393f;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
+}
+
+.DB_picking-box {
+  border-top: 3px solid #f44336;
+  background-color: #37393f;
+  animation: pulseBorder 1.5s infinite;
+}
+
+@keyframes pulseBorder {
+  0%, 100% { border-top-color: #f44336; }
+  50% { border-top-color: #ff9e80; }
+}
+
+.DB_user-team-box {
+  border-top: 3px solid #4caf50;
+}
+
+.DB_picked-box {
+  opacity: 0.7;
+}
+
+.DB_bot-team-box {
+  border-top: 3px solid #d32f2f;
+}
+
+/* Main Content Layout */
+.DB_main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left Sidebar - Team Roster */
+.DB_left-sidebar {
+  width: 250px;
+  background-color: #2b2d31;
+  color: white;
+  overflow-y: auto;
+  border-right: 1px solid #444;
+}
+
+.DB_team-roster {
+  padding: 10px;
+}
+
+.DB_roster-header {
+  padding: 5px 0 15px 0;
+  border-bottom: 1px solid #444;
+}
+
+.DB_roster-team-selector {
+  width: 100%;
+  padding: 8px;
+  background-color: #1d1e20;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+.DB_roster-content {
+  padding-top: 15px;
+}
+
+.DB_roster-positions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.DB_roster-position-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.DB_roster-position {
+  background-color: #1d1e20;
+  border-radius: 4px;
+  padding: 5px;
+  flex: 1;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.DB_position-label {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 0.6rem;
+  color: #aaa;
+}
+
+.DB_position-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+}
+
+.DB_position-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 15px;
+}
+
+.DB_position-player-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.DB_position-player-name {
+  font-size: 0.7rem;
+  margin-top: 5px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.DB_roster-bench {
+  margin-top: 10px;
+  background-color: #1d1e20;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.DB_bench-label {
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+  color: #aaa;
+}
+
+.DB_bench-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.DB_bench-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(33.333% - 7px);
+}
+
+.DB_bench-player-img {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.DB_bench-player-name {
+  font-size: 0.65rem;
+  margin-top: 3px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.DB_bench-empty {
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 10px;
+}
+
+/* Position color indicators */
+.DB_position-pg {
+  border-top: 3px solid #007bff;
+}
+
+.DB_position-sg {
+  border-top: 3px solid #28a745;
+}
+
+.DB_position-sf {
+  border-top: 3px solid #ffc107;
+}
+
+.DB_position-pf {
+  border-top: 3px solid #fd7e14;
+}
+
+.DB_position-c {
+  border-top: 3px solid #6f42c1;
+}
+
+.DB_position-g {
+  border-top: 3px solid #20c997;
+}
+
+.DB_position-f {
+  border-top: 3px solid #e83e8c;
+}
+
+.DB_position-util {
+  border-top: 3px solid #6c757d;
+}
+
+/* Center Panel */
+.DB_center-panel {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #dee2e6;
+  overflow: hidden;
+}
+
+.DB_filter-section {
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  z-index: 5;
+}
+
+.DB_players-section {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Right Panel */
+.DB_right-panel {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.DB_queue-section {
+  height: 40%;
+  overflow-y: auto;
+  padding: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.DB_picks-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* Draft pick list styling */
+.DB_pick-item {
+  display: flex;
+  padding: 8px 10px;
+  margin-bottom: 5px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.DB_recent-pick {
+  animation: highlight 2s ease-out;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: #ffe082;
+    transform: translateY(-3px);
+  }
+  100% {
+    background-color: white;
+    transform: translateY(0);
+  }
+}
+
+.DB_pick-bot-tag {
+  font-size: 0.6rem;
+  background-color: #d32f2f;
+  color: white;
+  padding: 1px 3px;
+  border-radius: 3px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* Processing state indicators */
+.DB_action-button.DB_processing {
+  background-color: #6c757d;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* This helps make sure the reconnecting popup doesn't move elements around */
+.DB_header {
+  position: relative;
+  min-height: 50px;
+}

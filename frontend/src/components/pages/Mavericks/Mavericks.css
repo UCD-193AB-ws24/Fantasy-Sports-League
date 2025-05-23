@@ -1,0 +1,89 @@
+.mavericks-container {
+  background-image: url("mavericks.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  height: 100vh;
+}
+
+.mavs-container {
+  background-image: url("lakers.png");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  height: 100vh;
+}
+
+/*
+color scheme
+cav wine: #860038
+cav gold: #FDBB30
+black: #000000
+*/
+
+.mavs-wrapper{
+width:20%;
+  background: #00538C;
+  padding: 2rem;
+  border-radius: 15px;
+  height:91vh;
+  width:80%;
+  margin-left: -5px;
+  margin-top: -7px;
+}
+.mavs-h1{
+    color: #B8C4CA;
+  font-size: 1.1rem;
+  font-family: sans-serif;
+}
+.sessions{
+  margin-top: 2rem;
+  border-radius: 12px;
+  position: relative;
+}
+.mavs-times{
+    font-weight: bold;
+  padding-bottom: 1.5rem;
+  border-left: 1px solid #B8C4CA;
+  position: relative;
+  padding-left: 20px;
+  margin-left: 0px;
+  &:last-child{
+    border: 0px;
+    padding-bottom: 0;
+  }
+  /*
+  mavs royal blue: #00538C
+  mavs navy blue: #002B5E
+  mavs silver: #B8C4CA
+  black: #000000*/
+  &:before{
+    content: '';
+    width: 15px;
+    height: 15px;
+    background: #002B5E;
+    border: 1px solid #4e5ed3;
+    box-shadow: 3px 3px 0px #963821;
+    box-shadow: 3px 3px 0px #BEC0C2;
+    border-radius: 50%;
+    position: absolute;
+    left: -10px;
+    top: 0px;
+  }
+}
+.mavs-time{
+  color: #B8C4CA;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+
+}
+.mavs-p{
+  color: black;
+  font-family: sans-serif;
+  line-height: 1.5;
+  margin-top:0.4rem;
+}
