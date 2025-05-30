@@ -524,8 +524,13 @@ const DraftBoard = () => {
         setDraftState(prev => {
           const newTimeRemaining = Math.max(0, prev.pickTimeRemaining - 1);
           
-          if (newTimeRemaining === 0 && timerRef.current) {
-            clearInterval(timerRef.current);
+          // When timer hits 0, we need to trigger the timeout pick
+          // But we can't do it inside setState, so we'll use a separate effect
+          if (newTimeRemaining === 0) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
           }
           
           return {
@@ -541,7 +546,18 @@ const DraftBoard = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, [draftState.status, draftState.pickTimeRemaining]);
+  }, [draftState.status, draftState.currentRound, draftState.currentPick]); // Changed dependencies
+
+  // Separate effect to handle timeout when timer reaches 0
+  useEffect(() => {
+    if (draftState.pickTimeRemaining === 0 && 
+        draftState.status === 'in_progress' && 
+        currentUserTurn && 
+        !pickingInProgress) {
+      console.log("Timer reached 0, handling timeout pick");
+      handleTimeoutPick();
+    }
+  }, [draftState.pickTimeRemaining, draftState.status, currentUserTurn]);
 
   // Effect to detect when it becomes the user's turn
   useEffect(() => {
@@ -1254,6 +1270,99 @@ const DraftBoard = () => {
       loadDraftData(false);
     }
   };
+
+// Add a ref to store the current queue
+const queueRef = useRef([]);
+  
+// Update the queue ref whenever queue changes
+useEffect(() => {
+  queueRef.current = queue;
+}, [queue]);
+
+// Add this new function after handleAutoPick
+const handleTimeoutPick = async () => {
+  // Use the ref to get the current queue value
+  const currentQueue = queueRef.current;
+  
+  if (!currentUserTurn || pickingInProgress) {
+    console.log("Cannot make timeout pick: not user's turn or already picking");
+    return;
+  }
+  
+  try {
+    setPickingInProgress(true);
+    setPickingTeamId(user?.id);
+    lastPickTimeRef.current = new Date();
+    
+    console.log(`Making timeout pick with queue: ${currentQueue.length} players in queue`);
+    
+    // Set up a timeout to reset picking state if no response
+    if (processingTimeoutRef.current) {
+      clearTimeout(processingTimeoutRef.current);
+    }
+    
+    processingTimeoutRef.current = setTimeout(() => {
+      console.log("No response after 5 seconds, resetting picking state");
+      setPickingInProgress(false);
+      setPickingTeamId(null);
+      loadDraftData(false);
+    }, 5000);
+    
+    // If we have queued players, try to pick the first available one
+    if (currentQueue.length > 0) {
+      // Find first player in queue that hasn't been drafted
+      const draftedIds = draftState.picks.map(pick => pick.playerId);
+      let playerToPick = null;
+      
+      for (const queuedPlayer of currentQueue) {
+        if (!draftedIds.includes(queuedPlayer.id)) {
+          playerToPick = queuedPlayer;
+          break;
+        }
+      }
+      
+      if (playerToPick) {
+        console.log(`Picking from queue: ${playerToPick.name}`);
+        setLastPickedPlayerId(playerToPick.id);
+        
+        // Use the regular pick endpoint
+        await axios.post(`http://localhost:5001/api/leagues/${leagueId}/draft/pick`, {
+          playerId: playerToPick.id
+        }, {
+          withCredentials: true
+        });
+        
+        // Remove picked player from queue
+        setQueue(prev => prev.filter(p => p.id !== playerToPick.id));
+        return;
+      } else {
+        console.log("All queued players have been drafted");
+      }
+    }
+    
+    // If no valid queued players, use autopick
+    console.log("No valid players in queue, using autopick");
+    await axios.post(`http://localhost:5001/api/leagues/${leagueId}/draft/autopick`, {}, {
+      withCredentials: true
+    });
+    
+  } catch (error) {
+    console.error("Error making timeout pick:", error);
+    
+    // Reset picking state
+    setPickingInProgress(false);
+    setPickingTeamId(null);
+    
+    // Clear timeout
+    if (processingTimeoutRef.current) {
+      clearTimeout(processingTimeoutRef.current);
+      processingTimeoutRef.current = null;
+    }
+    
+    // Force a refresh of draft data
+    loadDraftData(false);
+  }
+};
 
   // Format time remaining
   const formatTimeRemaining = (seconds) => {
