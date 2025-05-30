@@ -32,6 +32,12 @@
 .Matchups_vs {
   font-size: 2rem;
   font-weight: bold;
+  text-align: center;
+}
+
+.Matchups_weekly-result{
+  font-weight: 500;
+  text-align: center;
 }
 
 /* Week Selector */
@@ -318,4 +324,88 @@
   .Matchups_big-score {
     font-size: 2rem;
   }
+}
+
+.Matchups_week-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.Matchups_week-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  min-width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.Matchups_week-modal h2 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.Matchups_week-modal p {
+  margin-bottom: 1.5rem;
+  color: #666;
+  font-size: 1rem;
+}
+
+.Matchups_week-modal select {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  background-color: white;
+}
+
+.Matchups_week-modal select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.Matchups_week-modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.Matchups_week-modal-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.Matchups_week-modal-button.primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.Matchups_week-modal-button.primary:hover {
+  background-color: #0056b3;
+}
+
+.Matchups_week-modal-button.secondary {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.Matchups_week-modal-button.secondary:hover {
+  background-color: #e9ecef;
 }

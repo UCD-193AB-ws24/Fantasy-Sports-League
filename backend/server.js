@@ -659,7 +659,7 @@ app.get('/api/roster/:userId/:leagueId', async (req, res) => {
               include: {
                 stats: {
                   orderBy: { game_date: 'desc' },
-                  take: 10
+                  take: 100
                 }
               }
             }
@@ -1664,7 +1664,7 @@ app.get('/api/roster/forBots/:userId/playerNames', async (req, res) => {
                 team: true,
                 stats: {
                   orderBy: { game_date: 'desc' },
-                  take: 10
+                  take: 100
                 }
               }
             }
